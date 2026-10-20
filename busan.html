@@ -114,7 +114,7 @@ details.note summary{cursor:pointer}
   </div>
 
   <section class="card" aria-label="연도별 입주">
-    <p class="ctitle">연도별 입주</p>
+    <p class="ctitle">연도별 입주 · <span style="color:var(--price)">가격지수</span></p>
     <svg id="yb" viewBox="0 0 1000 130" width="100%" role="img" aria-label="연도별 입주 세대 막대"></svg>
   </section>
 
@@ -288,11 +288,11 @@ function summary(){
   const mark=()=>[...tb.children].forEach(r=>r.style.outline=(r.dataset.gu===(selGu||''))?'2px solid var(--accent)':'');
   const all=document.createElement('tr');all.className='gu';all.tabIndex=0;all.dataset.gu='';
   all.innerHTML=`<td><b>${DATA.city} 전체</b></td><td class="num"><b>${fmt(H)}</b></td><td class="num"><b>${on.length}</b></td><td></td>`;
-  const goAll=()=>{goHome();selGu=null;drawCycle();mark()};
+  const goAll=()=>{goHome();selGu=null;drawCycle();yearBars();mark()};
   all.onclick=goAll; all.onkeydown=e=>{if(e.key==='Enter')goAll()}; tb.appendChild(all);
   arr.forEach(([n,[h,c]])=>{const tr=document.createElement('tr');tr.className='gu';tr.tabIndex=0;tr.dataset.gu=n;
     tr.innerHTML=`<td>${n}</td><td class="num">${fmt(h)}</td><td class="num">${c}</td><td><div class="bar" style="width:${(h/mx*100).toFixed(0)}%"></div></td>`;
-    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();drawCycle();mark()};
+    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();drawCycle();yearBars();mark()};
     tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go()}; tb.appendChild(tr)});
   mark();
   if(!arr.length) tb.insertAdjacentHTML('beforeend','<tr><td colspan="4" style="text-align:left;color:var(--muted)">이 기간에는 입주 단지가 없습니다.</td></tr>');
@@ -312,6 +312,16 @@ function yearBars(){
   el('line',{x1:X0,x2:960,y1:sy(FAIR_Y),y2:sy(FAIR_Y),stroke:V('--muted'),'stroke-dasharray':'4 4'});
   const t=el('text',{x:962,y:sy(FAIR_Y)+4,'font-size':11,fill:V('--muted')});t.textContent='적정';
   [10000,20000,30000].filter(v=>v<mx).forEach(v=>{const e=el('text',{x:X0-6,y:sy(v)+4,'font-size':11,'text-anchor':'end',fill:V('--faint')});e.textContent=v/10000+'만'});
+
+  /* 가격지수(사이클 그래프와 같은 선) — 막대 위에 겹쳐 아래부터 전체 높이 사용 */
+  const pr=smooth4(DATA.price||[]), pg=smooth4((selGu&&DATA.priceGu&&DATA.priceGu[selGu])||[]); if(!pr.length) return;
+  const vs=pr.concat(pg).map(p=>p[1]), lo=Math.min(...vs), hi=Math.max(...vs), py=v=>106-(v-lo)/(hi-lo)*92;
+  const kx=k=>X0+(+k.slice(0,4)+(+k.slice(5,7)-1+(+k.slice(8,10)-1)/31)/12-Y_MIN)*W;
+  const ok=k=>+k.slice(0,4)>=Y_MIN&&kx(k)<=960;
+  if(pg.length) el('path',{d:curve(pg.filter(p=>ok(p[0])).map(([k,v])=>[kx(k),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':1.8,'stroke-dasharray':'5 3','pointer-events':'none'});
+  const P=pr.filter(p=>ok(p[0]));
+  el('path',{d:curve(P.map(([k,v])=>[kx(k),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.4,'stroke-linejoin':'round','pointer-events':'none'});
+  const L=P[P.length-1], e=el('text',{x:kx(L[0])+4,y:py(L[1])+4,'font-size':11,fill:V('--price'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3,'pointer-events':'none'});e.textContent='가격';
 }
 function ramp(){const c=document.getElementById('ramp'),x=c.getContext('2d');
   for(let i=0;i<360;i++){const y=Math.round(Y_MIN+i/359*(NOW_Y-1-Y_MIN));x.fillStyle=yc(y);x.fillRect(i,0,1,20)}
