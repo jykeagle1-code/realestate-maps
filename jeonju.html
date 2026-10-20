@@ -66,6 +66,7 @@ tr.gu{cursor:pointer}
 tr.gu:hover td{background:var(--chip)}
 .bar{height:8px;border-radius:4px;background:var(--over);opacity:.75}
 details.note summary{cursor:pointer}
+.scope{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-weight:600;vertical-align:1px}
 .note{font-size:12px;color:var(--faint);margin:0}
 .sizeleg{display:flex;align-items:flex-end;gap:14px}
 .sizeleg div{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--muted)}
@@ -114,17 +115,16 @@ details.note summary{cursor:pointer}
   </div>
 
   <section class="card" aria-label="연도별 입주">
-    <p class="ctitle">연도별 입주 · <span style="color:var(--price)">가격지수</span></p>
+    <p class="ctitle">연도별 입주 · <span style="color:var(--price)">가격지수</span> <span class="scope">전주 전체</span></p>
     <svg id="yb" viewBox="0 0 1000 130" width="100%" role="img" aria-label="연도별 입주 세대 막대"></svg>
   </section>
 
   <section class="card" aria-label="사이클 그래프">
-    <p class="ctitle">가격과 입주 사이클</p>
+    <p class="ctitle">가격과 입주 사이클 <span class="scope">전주 전체</span></p>
     <svg id="cyc" viewBox="0 0 1000 215" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
     <div class="legend">
             <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--price)" stroke-width="3"/></svg> 매매지수</span>
       <span><svg width="12" height="12"><circle cx="6" cy="6" r="4" style="fill:var(--panel);stroke:var(--price)" stroke-width="2"/></svg> 사이클 고점</span>
-      <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--guline)" stroke-width="2" stroke-dasharray="5 3"/></svg> 선택한 구</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--over)" opacity=".7"/></svg> 입주 과다</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--under)"/></svg> 적정 이하</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--ma)" stroke-width="2.6"/></svg> 입주 1년 평균</span>
@@ -174,7 +174,7 @@ function drawCycle(){
   const NS='http://www.w3.org/2000/svg', el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
   for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
   el('rect',{x:x(sel[0]),y:8,width:x(sel[1]+1)-x(sel[0]),height:177,fill:V('--band')});
-  const pr=smooth4(DATA.price||[]), pg=smooth4((selGu&&DATA.priceGu&&DATA.priceGu[selGu])||[]), vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
+  const pr=smooth4(DATA.price||[]), pg=[] /* 그래프는 구 선택과 무관하게 도시 전체 고정 */, vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
@@ -288,11 +288,11 @@ function summary(){
   const mark=()=>[...tb.children].forEach(r=>r.style.outline=(r.dataset.gu===(selGu||''))?'2px solid var(--accent)':'');
   const all=document.createElement('tr');all.className='gu';all.tabIndex=0;all.dataset.gu='';
   all.innerHTML=`<td><b>${DATA.city} 전체</b></td><td class="num"><b>${fmt(H)}</b></td><td class="num"><b>${on.length}</b></td><td></td>`;
-  const goAll=()=>{goHome();selGu=null;drawCycle();yearBars();mark()};
+  const goAll=()=>{goHome();selGu=null;mark()};
   all.onclick=goAll; all.onkeydown=e=>{if(e.key==='Enter')goAll()}; tb.appendChild(all);
   arr.forEach(([n,[h,c]])=>{const tr=document.createElement('tr');tr.className='gu';tr.tabIndex=0;tr.dataset.gu=n;
     tr.innerHTML=`<td>${n}</td><td class="num">${fmt(h)}</td><td class="num">${c}</td><td><div class="bar" style="width:${(h/mx*100).toFixed(0)}%"></div></td>`;
-    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();drawCycle();yearBars();mark()};
+    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();mark()};
     tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go()}; tb.appendChild(tr)});
   mark();
   if(!arr.length) tb.insertAdjacentHTML('beforeend','<tr><td colspan="4" style="text-align:left;color:var(--muted)">이 기간에는 입주 단지가 없습니다.</td></tr>');
@@ -314,7 +314,7 @@ function yearBars(){
   [10000,20000,30000].filter(v=>v<mx).forEach(v=>{const e=el('text',{x:X0-6,y:sy(v)+4,'font-size':11,'text-anchor':'end',fill:V('--faint')});e.textContent=v/10000+'만'});
 
   /* 가격지수(사이클 그래프와 같은 선) — 막대 위에 겹쳐 아래부터 전체 높이 사용 */
-  const pr=smooth4(DATA.price||[]), pg=smooth4((selGu&&DATA.priceGu&&DATA.priceGu[selGu])||[]); if(!pr.length) return;
+  const pr=smooth4(DATA.price||[]), pg=[] /* 그래프는 구 선택과 무관하게 도시 전체 고정 */; if(!pr.length) return;
   const vs=pr.concat(pg).map(p=>p[1]), lo=Math.min(...vs), hi=Math.max(...vs), py=v=>106-(v-lo)/(hi-lo)*92;
   const kx=k=>X0+(+k.slice(0,4)+(+k.slice(5,7)-1+(+k.slice(8,10)-1)/31)/12-Y_MIN)*W;
   const ok=k=>+k.slice(0,4)>=Y_MIN&&kx(k)<=960;
