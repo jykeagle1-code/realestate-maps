@@ -6,3 +6,7 @@
 - 좌표: 카카오 로컬 API로 주소 변환
 - 지도: 카카오맵 JavaScript SDK (이 도메인에서만 작동하도록 제한된 키)
 - 참고용 자료입니다.
+
+## 도시 추가 (공개판)
+- `python3 -I build_city.py <도시>` — `build_city.py`의 CFG에 도시 설정(시도 이름, 시 이름 표기, 구 추출 규칙, R-ONE 지역명, 경계 이름, data2 이름)을 넣으면 됨. 부산·전주 등록.
+- 부산은 `build_public.py`(구버전)로도 만들 수 있음 — 둘 다 template_kakao.html 사용.
