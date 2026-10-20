@@ -8,17 +8,17 @@
 /* 레이아웃: 위에서 아래로 사이클 → 연도 선택 → 지도(데스크톱은 옆에 요약) → 연도별 막대 */
 :root{
   --bg:#F3F5F4; --panel:#FFFFFF; --ink:#1B2127; --muted:#5C6670; --faint:#8C959E; --line:#DCE1E3;
-  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#0B2447; --ma:#B23A1B;
+  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#D93025; --ma:#1F3A5F; --guline:#2F6FB5;
   --over:#E8743B; --under:#B8C0CA; --band:rgba(239,159,39,.14); --accent:#C2561E; --chip:#EEF1F0; --unsold:#7B3FA8; --unsold:#7B3FA8;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#A9C3EA; --ma:#F08A5D;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#A9C3EA; --guline:#7FB2E5;
   --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#A9C3EA; --ma:#F08A5D;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#A9C3EA; --guline:#7FB2E5;
   --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
@@ -80,10 +80,10 @@ tr.gu:hover td{background:var(--chip)}
 
   <section class="card" aria-label="사이클 그래프">
     <p class="ctitle">부산 아파트 매매지수(한국부동산원, 2003.11~ 월간·2012.05~ 주간)와 분기 입주 · 구·군 표에서 구를 누르면 그 구의 지수가 함께 표시됩니다</p>
-    <svg id="cyc" viewBox="0 0 1000 270" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
+    <svg id="cyc" viewBox="0 0 1000 215" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
     <div class="legend">
             <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--price)" stroke-width="3"/></svg> 매매지수(부산)</span>
-      <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--accent)" stroke-width="2" stroke-dasharray="5 3"/></svg> 선택한 구</span>
+      <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--guline)" stroke-width="2" stroke-dasharray="5 3"/></svg> 선택한 구</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--over)" opacity=".7"/></svg> 분기 입주 &gt; 적정</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--under)"/></svg> ≤ 적정</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--ma)" stroke-width="2.6"/></svg> 4분기 이동평균</span>
@@ -161,13 +161,13 @@ function drawCycle(){
   const s=document.getElementById('cyc'); s.innerHTML='';
   const X0=56,X1=985,T0=2000,T1=2031, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
   const NS='http://www.w3.org/2000/svg', el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
-  for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:240,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
-  el('rect',{x:x(sel[0]),y:8,width:x(sel[1]+1)-x(sel[0]),height:238,fill:V('--band')});
+  for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
+  el('rect',{x:x(sel[0]),y:8,width:x(sel[1]+1)-x(sel[0]),height:177,fill:V('--band')});
   const pr=DATA.price||[], pg=(selGu&&DATA.priceGu&&DATA.priceGu[selGu])||[], vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
-  const py=v=>110-(v-lo)/(hi-lo)*92;
-  if(pg.length) el('path',{d:'M'+pg.map(([k,v])=>`${x(+k.slice(0,4),+k.slice(5,7)).toFixed(1)},${py(v).toFixed(1)}`).join('L'),fill:'none',stroke:V('--accent'),'stroke-width':2,'stroke-dasharray':'5 3'});
+  const py=v=>100-(v-lo)/(hi-lo)*82;
+  if(pg.length) el('path',{d:'M'+pg.map(([k,v])=>`${x(+k.slice(0,4),+k.slice(5,7)).toFixed(1)},${py(v).toFixed(1)}`).join('L'),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:'M'+pr.map(([k,v])=>`${x(+k.slice(0,4),+k.slice(5,7)).toFixed(1)},${py(v).toFixed(1)}`).join('L'),fill:'none',stroke:V('--price'),'stroke-width':2.6,'stroke-linejoin':'round'});
-  const base=240, smax=Math.max(12000,...DATA.mq.map(q=>q[1]))*1.0, sy=v=>base-Math.min(v,smax)/smax*105;
+  const base=185, smax=Math.max(12000,...DATA.mq.map(q=>q[1]))*1.0, sy=v=>base-Math.min(v,smax)/smax*90;
   const wq=(X1-X0)/(T1-T0)/4;
   DATA.mq.forEach(([k,v])=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
     el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:v>FAIR_Q?V('--over'):V('--under'),'fill-opacity':fut?.3:.7})});
@@ -175,7 +175,7 @@ function drawCycle(){
   for(let i=3;i<DATA.mq.length;i++){const k=DATA.mq[i][0],a=(mq[i]+mq[i-1]+mq[i-2]+mq[i-3])/4;d+=(d?'L':'M')+x(+k.slice(0,4),+k.slice(5)*3).toFixed(1)+','+sy(a).toFixed(1)}
   el('path',{d,fill:'none',stroke:V('--ma'),'stroke-width':2.2});
   const U=DATA.unsold||[], CU=DATA.cunsold||[];
-  if(U.length){const um=Math.max(...U.map(u=>u[1]))||1, uy=v=>base-v/um*100;
+  if(U.length){const um=Math.max(...U.map(u=>u[1]))||1, uy=v=>base-v/um*85;
     const line=(arr,st)=>{const d='M'+arr.map(([k,v])=>`${(x(+k.slice(0,4),+k.slice(5,7))).toFixed(1)},${uy(v).toFixed(1)}`).join('L');
       el('path',{d,fill:'none',stroke:V('--panel'),'stroke-width':st[0]+3,'stroke-linejoin':'round',opacity:.85});
       el('path',{d,fill:'none',stroke:V('--unsold'),'stroke-width':st[0],'stroke-dasharray':st[1]||null,'stroke-linejoin':'round'})};
@@ -185,13 +185,13 @@ function drawCycle(){
   const xn=x(NOW_Y,NOW_M); el('line',{x1:xn,x2:xn,y1:10,y2:base,stroke:V('--faint'),'stroke-width':1});
   const tx=(X,Y,s,a)=>{const e=el('text',Object.assign({x:X,y:Y,'font-size':12,fill:V('--muted')},a||{}));e.textContent=s};
   tx(xn+4,22,'현재');
-  for(let y=2000;y<=2030;y+=5) tx(x(y),262,y,{'text-anchor':'middle'});
+  for(let y=2000;y<=2030;y+=5) tx(x(y),205,y,{'text-anchor':'middle'});
   if(pr.length) tx(X0-6,40,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
-  tx(X0-6,150,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
+  tx(X0-6,130,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
   if(!pr.length) return;
   const pk=pr.reduce((a,b)=>b[1]>a[1]?b:a); const px=x(+pk[0].slice(0,4),+pk[0].slice(5,7));
   el('circle',{cx:px,cy:py(pk[1]),r:4.5,fill:V('--panel'),stroke:V('--price'),'stroke-width':2});
-  if(pg.length){const l=pg[pg.length-1];tx(x(+l[0].slice(0,4),+l[0].slice(5,7))+4,py(l[1])+4,selGu,{fill:V('--accent'),'font-weight':700})}
+  if(pg.length){const l=pg[pg.length-1];tx(x(+l[0].slice(0,4),+l[0].slice(5,7))+4,py(l[1])+4,selGu,{fill:V('--guline'),'font-weight':700})}
   tx(px,py(pk[1])-9,'고점 '+pk[0].slice(2,4)+'.'+pk[0].slice(5,7),{'text-anchor':'middle',fill:V('--price'),'font-weight':700});
 }
 
