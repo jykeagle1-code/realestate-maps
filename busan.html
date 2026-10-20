@@ -81,10 +81,11 @@ details.note summary{cursor:pointer}
 .rlab{font-size:14px}
 .rlab b{font-size:17px;color:var(--accent)}
 .rng{position:relative;height:42px;margin:4px 8px 0}
-.rng .trk,.rng .fill{position:absolute;top:25px;height:5px;border-radius:3px}
+.rng .trk,.rng .fill{position:absolute;top:22px;height:10px;border-radius:5px}
 .rng .trk{left:0;right:0;background:var(--line)}
-.rng .fill{background:var(--accent)}
-.rng input{position:absolute;left:-8px;width:calc(100% + 16px);top:12px;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.rng .fill{background:var(--accent);cursor:grab;touch-action:none;z-index:1}
+.rng .fill:active{cursor:grabbing}
+.rng input{position:absolute;z-index:2;left:-8px;width:calc(100% + 16px);top:12px;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
 .rng input::-webkit-slider-runnable-track{background:none;border:0}
 .rng input::-moz-range-track{background:none;border:0}
 .rng input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:20px;height:20px;border-radius:50%;background:var(--panel);border:2.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
@@ -94,7 +95,7 @@ details.note summary{cursor:pointer}
 .mapwrap{min-width:0;align-self:start;display:flex;flex-direction:column;gap:8px}
 .mapbox{position:relative}
 .period{padding:10px 14px 6px}
-.rng .ytk{position:absolute;top:22px;width:1px;height:11px;background:var(--muted);opacity:.55}
+.rng .ytk{position:absolute;top:22px;width:1px;height:10px;background:var(--muted);opacity:.55}
 .rng .nowm{position:absolute;top:0;height:30px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:0}
 .rng .nowm span{font-size:10px;font-weight:700;line-height:1;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-radius:999px;padding:2px 6px;white-space:nowrap}
 .rng .nowm i{display:block;width:0;height:0;margin-top:3px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--accent)}
@@ -386,6 +387,12 @@ function ramp(){const box=document.getElementById('yearleg'); box.innerHTML='';
 const s0=document.getElementById('y0'), s1=document.getElementById('y1');
 [s0,s1].forEach(i=>{i.min=R0;i.max=R1;i.step=1});
 const cl=v=>Math.max(R0,Math.min(R1,v)), pct=v=>(cl(v)-R0)/(R1-R0)*100;
+/* 선택 구간(주황 막대)을 잡고 끌면 기간 길이를 유지한 채 앞뒤로 이동 */
+{const f=document.getElementById('rfill'), box=document.querySelector('.rng'); let st=null;
+  f.addEventListener('pointerdown',e=>{st={x:e.clientX,a:cl(sel[0]),b:cl(sel[1])};f.setPointerCapture(e.pointerId);e.preventDefault()});
+  f.addEventListener('pointermove',e=>{if(!st)return;const d=Math.round((e.clientX-st.x)/box.clientWidth*(R1-R0));
+    const dd=Math.max(R0-st.a,Math.min(R1-st.b,d)); if(sel[0]!==st.a+dd){sel=[st.a+dd,st.b+dd];later()}});
+  const end=()=>{st=null}; f.addEventListener('pointerup',end); f.addEventListener('pointercancel',end);}
 document.getElementById('rtick').innerHTML=[...Array(yOf(R1)-yOf(R0)).keys()].map(i=>yOf(R0)+1+i).map(y=>`<span style="left:${pct(YM(y,1))}%"${y===NOW_Y?' class="now"':''}>${y}</span>`).join('');
 [...Array(yOf(R1)-yOf(R0)).keys()].forEach(i=>{const t=document.createElement('div');t.className='ytk';t.style.left=pct(YM(yOf(R0)+1+i,1))+'%';document.querySelector('.rng').prepend(t)});
 {const n=document.createElement('div');n.className='nowm';n.style.left=pct(YM(NOW_Y,NOW_M))+'%';n.innerHTML=`<span>현재 ${String(NOW_Y).slice(2)}.${String(NOW_M).padStart(2,'0')}</span><i></i>`;document.querySelector('.rng').prepend(n)}
@@ -394,7 +401,7 @@ let raf=0; const later=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(
 s0.oninput=()=>{const v=+s0.value; sel=v<=sel[1]?[v,sel[1]]:(sel[0]===sel[1]?[sel[0],v]:[sel[1],sel[1]]); later()};
 s1.oninput=()=>{const v=+s1.value; sel=v>=sel[0]?[sel[0],v]:(sel[0]===sel[1]?[v,sel[1]]:[sel[0],sel[0]]); later()};
 /* 두 손잡이가 겹치면 끝 손잡이를 위로: 왼쪽 끝에 몰렸을 때는 시작 손잡이를 위로 */
-const zfix=()=>{s0.style.zIndex=sel[0]>=R1-1?3:1;s1.style.zIndex=2};
+const zfix=()=>{s0.style.zIndex=sel[0]>=R1-1?4:2;s1.style.zIndex=3};
 function update(){s0.value=cl(sel[0]);s1.value=cl(sel[1]);zfix();
   const f=document.getElementById('rfill');f.style.left=pct(sel[0])+'%';f.style.width=Math.max(.6,pct(sel[1])-pct(sel[0]))+'%';
   document.getElementById('rl0').textContent=ymLab(sel[0]);document.getElementById('rl1').textContent=ymLab(sel[1]);
