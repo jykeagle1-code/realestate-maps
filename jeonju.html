@@ -71,7 +71,7 @@ details.note summary{cursor:pointer}
 .mapwrap{position:relative;min-width:0;align-self:start}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mapleg .lt{font-weight:700;margin-bottom:3px}
-.yl{display:flex;flex-wrap:wrap;gap:2px 4px;max-width:250px}
+.yl{display:flex;flex-direction:column;gap:1px}
 .yl button{font:inherit;font-size:11px;color:var(--muted);background:none;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 5px;border-radius:6px}
 .yl button[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);font-weight:700}
 .yl i{display:inline-block;width:11px;height:11px;border-radius:50%}
@@ -100,11 +100,13 @@ details.note summary{cursor:pointer}
   <div class="main">
     <div class="mapwrap">
       <div id="map" role="region" aria-label="입주 단지 지도"></div>
-      <div class="mapleg" aria-label="지도 범례">
-        <div class="lt">입주 연도 <span style="color:var(--faint)">(누르면 그 연도만)</span></div>
-        <div class="yl" id="yearleg"></div>
-        <div class="lt" style="margin-top:6px">원 크기(세대)</div>
+      <div class="mapleg" style="left:10px;top:10px;right:auto;bottom:auto" aria-label="원 크기 범례">
+        <div class="lt">원 크기(세대)</div>
         <div class="sizeleg" id="sizeleg"></div>
+      </div>
+      <div class="mapleg" aria-label="입주 연도 범례">
+        <div class="lt">입주 연도</div>
+        <div class="yl" id="yearleg"></div>
       </div>
     </div>
     <aside class="side">
@@ -260,7 +262,7 @@ function initMap(){
     kakao.maps.event.addListener(c,'click',()=>openInfo(r));
     kakao.maps.event.addListener(c,'mouseover',()=>{hoverDiv.innerHTML=`<b>${r[0]}</b> · ${fmt(r[5])}세대 · ${r[3]}.${String(r[4]).padStart(2,'0')}`;hover.setPosition(new kakao.maps.LatLng(r[1],r[2]));hover.setMap(map);c.setOptions({strokeWeight:3})});
     kakao.maps.event.addListener(c,'mouseout',()=>{hover.setMap(null);styleMarks()});return c});
-  kakao.maps.event.addListener(map,'zoom_changed',()=>{const k=zk();circles.forEach(c=>c.setRadius(radM(c.r[5])*k));sizeLegend()});
+  kakao.maps.event.addListener(map,'zoom_changed',()=>{const k=zk();circles.forEach(c=>c.setRadius(radM(c.r[5])*k))});
   kakao.maps.event.addListener(map,'click',()=>{if(overlay)overlay.setMap(null)});
   update();
 }
@@ -282,7 +284,7 @@ function mPerPx(){const p=map.getProjection(),c=map.getCenter(),a=p.pointFromCoo
   const ll2=p.coordsFromPoint(new kakao.maps.Point(a.x+100,a.y));
   const R=6371000,toR=Math.PI/180,dl=(ll2.getLng()-c.getLng())*toR*Math.cos(c.getLat()*toR);return Math.abs(dl*R)/100}
 function sizeLegend(){ if(!map) return; const mpp=mPerPx();
-  document.getElementById('sizeleg').innerHTML=[500,1000,2000].map(h=>{const r=Math.min(24,Math.max(2,radM(h)*zk()/mpp));return `<div><i style="width:${2*r}px;height:${2*r}px"></i>${fmt(h)}</div>`}).join('');}
+  document.getElementById('sizeleg').innerHTML=[500,1000,2000].map(h=>{const r=Math.max(2,radM(h)/(mppHome||mpp));return `<div><i style="width:${2*r}px;height:${2*r}px"></i>${fmt(h)}</div>`}).join('');}
 const guLayers={get:n=>guPolys[n]};
 function goHome(){if(home){map.setLevel(home[1]);map.setCenter(home[0])}else if(cityBounds)map.setBounds(cityBounds)}
 function fitGu(n){const p=guPolys[n];if(!p)return;const b=new kakao.maps.LatLngBounds();p.getPath().forEach(path=>(Array.isArray(path)?path:[path]).forEach(ll=>b.extend(ll)));map.setBounds(b)}
@@ -343,9 +345,9 @@ function ramp(){const box=document.getElementById('yearleg'); box.innerHTML='';
   const past=[Y_MIN,NOW_Y-1], g=`linear-gradient(90deg,${yc(Y_MIN)},${yc(NOW_Y-1)})`;
   const mk=(html,r,lab)=>{const b=document.createElement('button');b.type='button';b.innerHTML=html;b.dataset.r=r.join('-');b.setAttribute('aria-label',lab);
     b.onclick=()=>{sel=(sel.join('-')===b.dataset.r)?[Y_MIN,Y_MAX]:[...r];update()};box.appendChild(b)};
-  mk(`<i style="width:26px;border-radius:5px;background:${g}"></i>~${NOW_Y-1}`,past,`${NOW_Y-1}년까지`);
+  mk('<i style="background:none;border:1px dashed var(--muted)"></i>전체',[Y_MIN,Y_MAX],'전체 연도');
+  mk(`<i style="background:${g}"></i>~${NOW_Y-1}`,past,`${NOW_Y-1}년까지`);
   for(let y=NOW_Y;y<=Y_MAX;y++){const c=yc(y);mk(`<i style="background:${c};border:1px solid ${dk(c)}"></i>${y}`,[y,y],`${y}년`)}
-  mk('전체',[Y_MIN,Y_MAX],'전체 연도');
 }
 /* 컨트롤 */
 const s0=document.getElementById('y0'), s1=document.getElementById('y1');
