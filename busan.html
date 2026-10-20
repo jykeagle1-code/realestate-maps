@@ -177,7 +177,7 @@ function drawCycle(){
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
-  const base=185, smax=FAIR_Y*2, /* 연 적정공급량을 높이 절반에 고정, 2배 초과는 잘리고 ▲ 표시. 분기 막대·이동공급합·적정 모두 같은 눈금 */ sy=v=>base-Math.min(v,smax)/smax*128;  /* 막대도 그래프 거의 전체 높이 사용 */
+  const base=185, smax=FAIR_Y*3, /* 연 적정공급량을 높이 1/3에 고정, 3배 초과는 잘리고 ▲ 표시. 분기 막대·이동공급합·적정 모두 같은 눈금 */ sy=v=>base-Math.min(v,smax)/smax*128;  /* 막대도 그래프 거의 전체 높이 사용 */
   const wq=(X1-X0)/(T1-T0)/4;
   /* 그 분기를 가운데 두고 앞뒤 반년씩: ½·q[i-2]+q[i-1]+q[i]+q[i+1]+½·q[i+2] (= 1년치) */
   const cen=i=>{const m=DATA.mq;if(i<2||i>m.length-3)return null;return .5*m[i-2][1]+m[i-1][1]+m[i][1]+m[i+1][1]+.5*m[i+2][1]};
