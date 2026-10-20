@@ -209,7 +209,7 @@ function drawCycle(){
 }
 
 /* 지도 (카카오맵) */
-let map, circles=[], guPolys={}, overlay=null, ghost2=true;
+let map, circles=[], guPolys={}, overlay=null, ghost2=true, hover=null, hoverDiv=null;
 const R0M=230; /* 1,000세대 원 반지름(m) — 원 넓이가 세대수에 비례 */
 const radM=h=>Math.sqrt(h/1000)*R0M;
 function initMap(){
@@ -223,9 +223,14 @@ function initMap(){
   });
   map.setBounds(bounds);
   if(map.getLevel()>8){const sw=bounds.getSouthWest(),ne=bounds.getNorthEast();map.setLevel(8);map.setCenter(new kakao.maps.LatLng((sw.getLat()+ne.getLat())/2,(sw.getLng()+ne.getLng())/2))}
+  hoverDiv=document.createElement('div');
+  hoverDiv.style.cssText='background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);transform:translateY(-10px);pointer-events:none';
+  hover=new kakao.maps.CustomOverlay({content:hoverDiv,yAnchor:1,zIndex:20});
   const rows=[...DATA.rows].sort((a,b)=>b[5]-a[5]);
   circles=rows.map(r=>{const c=new kakao.maps.Circle({map,center:new kakao.maps.LatLng(r[1],r[2]),radius:radM(r[5]),strokeWeight:1});c.r=r;
-    kakao.maps.event.addListener(c,'click',()=>openInfo(r));return c});
+    kakao.maps.event.addListener(c,'click',()=>openInfo(r));
+    kakao.maps.event.addListener(c,'mouseover',()=>{hoverDiv.innerHTML=`<b>${r[0]}</b> · ${fmt(r[5])}세대 · ${r[3]}.${String(r[4]).padStart(2,'0')}`;hover.setPosition(new kakao.maps.LatLng(r[1],r[2]));hover.setMap(map);c.setOptions({strokeWeight:3})});
+    kakao.maps.event.addListener(c,'mouseout',()=>{hover.setMap(null);styleMarks()});return c});
   kakao.maps.event.addListener(map,'zoom_changed',sizeLegend);
   kakao.maps.event.addListener(map,'click',()=>{if(overlay)overlay.setMap(null)});
   update();
