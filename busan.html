@@ -174,7 +174,7 @@ function drawCycle(){
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
-  const base=185, smax=Math.max(12000,...DATA.mq.map(q=>q[1]))*1.0, sy=v=>base-Math.min(v,smax)/smax*90;
+  const base=185, smax=Math.max(FAIR_Q*3,...DATA.mq.map(q=>q[1]))*1.0, sy=v=>base-Math.min(v,smax)/smax*90;
   const wq=(X1-X0)/(T1-T0)/4;
   DATA.mq.forEach(([k,v])=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
     const r=el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:v>FAIR_Q?V('--over'):V('--under'),'fill-opacity':.72,style:'cursor:pointer'});
@@ -195,7 +195,7 @@ function drawCycle(){
   el('line',{x1:X0,x2:X1,y1:sy(FAIR_Q),y2:sy(FAIR_Q),stroke:V('--muted'),'stroke-dasharray':'4 4','stroke-width':1.2});
   const xn=x(NOW_Y,NOW_M); el('line',{x1:xn,x2:xn,y1:8,y2:base,stroke:V('--ink'),'stroke-width':1.8});
   const tx=(X,Y,s,a)=>{const e=el('text',Object.assign({x:X,y:Y,'font-size':12,fill:V('--muted')},a||{}));e.textContent=s};
-  tx(xn+4,22,'현재',{fill:V('--ink'),'font-weight':700});
+  tx(xn,base+12,'현재',{fill:V('--ink'),'font-weight':700,'text-anchor':'middle','font-size':11});
   tipEl=el('text',{x:X0+6,y:20,'font-size':13,fill:V('--ink'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':4});tipEl.textContent='막대에 마우스를 올리거나 누르면 입주 물량이 보입니다';tipEl.setAttribute('fill-opacity','.75');
   for(let y=2000;y<=2030;y+=5) tx(x(y),205,y,{'text-anchor':'middle'});
   if(pr.length) tx(X0-6,30,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
@@ -221,7 +221,7 @@ function initMap(){
     guPolys[f.properties.name]=new kakao.maps.Polygon({map,path:paths,strokeWeight:1.5,strokeColor:'#5C6670',strokeOpacity:.55,strokeStyle:'shortdash',fillOpacity:0});
   });
   map.setBounds(bounds);
-  if(map.getLevel()>8){map.setLevel(8);map.setCenter(new kakao.maps.LatLng(35.17,129.06))}
+  if(map.getLevel()>8){const sw=bounds.getSouthWest(),ne=bounds.getNorthEast();map.setLevel(8);map.setCenter(new kakao.maps.LatLng((sw.getLat()+ne.getLat())/2,(sw.getLng()+ne.getLng())/2))}
   const rows=[...DATA.rows].sort((a,b)=>b[5]-a[5]);
   circles=rows.map(r=>{const c=new kakao.maps.Circle({map,center:new kakao.maps.LatLng(r[1],r[2]),radius:radM(r[5]),strokeWeight:1});c.r=r;
     kakao.maps.event.addListener(c,'click',()=>openInfo(r));return c});
