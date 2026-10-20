@@ -157,6 +157,7 @@ let sel=[2025,Math.min(2028,Y_MAX)], ghost=true, selGu=null;
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
 /* 사이클 그래프 */
+let tipEl=null;
 function drawCycle(){
   const s=document.getElementById('cyc'); s.innerHTML='';
   const X0=56,X1=985,T0=2000,T1=2031, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
@@ -164,13 +165,17 @@ function drawCycle(){
   for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
   el('rect',{x:x(sel[0]),y:8,width:x(sel[1]+1)-x(sel[0]),height:177,fill:V('--band')});
   const pr=DATA.price||[], pg=(selGu&&DATA.priceGu&&DATA.priceGu[selGu])||[], vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
-  const py=v=>100-(v-lo)/(hi-lo)*82;
+  const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:'M'+pg.map(([k,v])=>`${x(+k.slice(0,4),+k.slice(5,7)).toFixed(1)},${py(v).toFixed(1)}`).join('L'),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:'M'+pr.map(([k,v])=>`${x(+k.slice(0,4),+k.slice(5,7)).toFixed(1)},${py(v).toFixed(1)}`).join('L'),fill:'none',stroke:V('--price'),'stroke-width':2.6,'stroke-linejoin':'round'});
   const base=185, smax=Math.max(12000,...DATA.mq.map(q=>q[1]))*1.0, sy=v=>base-Math.min(v,smax)/smax*90;
   const wq=(X1-X0)/(T1-T0)/4;
   DATA.mq.forEach(([k,v])=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
-    el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:v>FAIR_Q?V('--over'):V('--under'),'fill-opacity':fut?.3:.7})});
+    const r=el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:v>FAIR_Q?V('--over'):V('--under'),'fill-opacity':.72,style:'cursor:pointer'});
+    const msg=`${y}년 ${q}분기${fut?'(예정)':''} 입주 ${fmt(v)}세대 · 적정의 ${(v/FAIR_Q).toFixed(1)}배`;
+    const tt=document.createElementNS('http://www.w3.org/2000/svg','title');tt.textContent=msg;r.appendChild(tt);
+    const show=()=>{if(tipEl){tipEl.textContent=msg;tipEl.setAttribute('fill-opacity','1')}r.setAttribute('fill-opacity','1')};
+    r.addEventListener('mouseenter',show);r.addEventListener('click',show);r.addEventListener('mouseleave',()=>r.setAttribute('fill-opacity','.72'))});
   const mq=DATA.mq.map(q=>q[1]); let d='';
   for(let i=3;i<DATA.mq.length;i++){const k=DATA.mq[i][0],a=(mq[i]+mq[i-1]+mq[i-2]+mq[i-3])/4;d+=(d?'L':'M')+x(+k.slice(0,4),+k.slice(5)*3).toFixed(1)+','+sy(a).toFixed(1)}
   el('path',{d,fill:'none',stroke:V('--ma'),'stroke-width':2.2});
@@ -182,12 +187,13 @@ function drawCycle(){
     line(U,[2.6]); if(CU.length) line(CU,[2,'3 3']);
     const l=U[U.length-1]; const t2=el('text',{x:x(+l[0].slice(0,4),+l[0].slice(5,7))+4,y:uy(l[1])-4,'font-size':11,fill:V('--unsold'),'font-weight':700}); t2.textContent=`미분양 ${fmt(l[1])}`;}
   el('line',{x1:X0,x2:X1,y1:sy(FAIR_Q),y2:sy(FAIR_Q),stroke:V('--muted'),'stroke-dasharray':'4 4','stroke-width':1.2});
-  const xn=x(NOW_Y,NOW_M); el('line',{x1:xn,x2:xn,y1:10,y2:base,stroke:V('--faint'),'stroke-width':1});
+  const xn=x(NOW_Y,NOW_M); el('line',{x1:xn,x2:xn,y1:8,y2:base,stroke:V('--ink'),'stroke-width':1.8});
   const tx=(X,Y,s,a)=>{const e=el('text',Object.assign({x:X,y:Y,'font-size':12,fill:V('--muted')},a||{}));e.textContent=s};
-  tx(xn+4,22,'현재');
+  tx(xn+4,22,'현재',{fill:V('--ink'),'font-weight':700});
+  tipEl=el('text',{x:X0+6,y:20,'font-size':13,fill:V('--ink'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':4});tipEl.textContent='막대에 마우스를 올리거나 누르면 입주 물량이 보입니다';tipEl.setAttribute('fill-opacity','.75');
   for(let y=2000;y<=2030;y+=5) tx(x(y),205,y,{'text-anchor':'middle'});
-  if(pr.length) tx(X0-6,40,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
-  tx(X0-6,130,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
+  if(pr.length) tx(X0-6,30,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
+  tx(X0-6,176,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
   if(!pr.length) return;
   const pk=pr.reduce((a,b)=>b[1]>a[1]?b:a); const px=x(+pk[0].slice(0,4),+pk[0].slice(5,7));
   el('circle',{cx:px,cy:py(pk[1]),r:4.5,fill:V('--panel'),stroke:V('--price'),'stroke-width':2});
