@@ -174,7 +174,7 @@ function drawCycle(){
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
   if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
-  const base=185, smax=FAIR_Q*3, /* 적정선은 막대 영역의 1/3 높이에 고정, 3배 초과는 잘리고 ▲ 표시 */ sy=v=>base-Math.min(v,smax)/smax*90;
+  const base=185, smax=FAIR_Q*3, /* 적정선은 막대 영역의 1/3 높이에 고정, 3배 초과는 잘리고 ▲ 표시 */ sy=v=>base-Math.min(v,smax)/smax*160;  /* 막대도 그래프 거의 전체 높이 사용 */
   const wq=(X1-X0)/(T1-T0)/4;
   DATA.mq.forEach(([k,v])=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
     const r=el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:v>FAIR_Q?V('--over'):V('--under'),'fill-opacity':.72,style:'cursor:pointer'});
@@ -187,7 +187,7 @@ function drawCycle(){
   for(let i=3;i<DATA.mq.length;i++){const k=DATA.mq[i][0],a=(mq[i]+mq[i-1]+mq[i-2]+mq[i-3])/4;d+=(d?'L':'M')+x(+k.slice(0,4),+k.slice(5)*3).toFixed(1)+','+sy(a).toFixed(1)}
   el('path',{d,fill:'none',stroke:V('--ma'),'stroke-width':2.2});
   const U=DATA.unsold||[], CU=DATA.cunsold||[];
-  if(U.length){const um=Math.max(...U.map(u=>u[1]))||1, uy=v=>base-v/um*85;
+  if(U.length){const um=Math.max(...U.map(u=>u[1]))||1, uy=v=>base-v/um*150;
     const line=(arr,st)=>{const d='M'+arr.map(([k,v])=>`${(x(+k.slice(0,4),+k.slice(5,7))).toFixed(1)},${uy(v).toFixed(1)}`).join('L');
       el('path',{d,fill:'none',stroke:V('--panel'),'stroke-width':st[0]+3,'stroke-linejoin':'round',opacity:.85});
       el('path',{d,fill:'none',stroke:V('--unsold'),'stroke-width':st[0],'stroke-dasharray':st[1]||null,'stroke-linejoin':'round'})};
