@@ -48,7 +48,8 @@ select{font:inherit;font-size:14px;padding:6px 8px;border-radius:8px;border:1px 
 @media (min-width:920px){.main{grid-template-columns:minmax(0,1fr) 330px}
   /* 오른쪽 열은 왼쪽(지도+기간 막대) 높이까지만, 구·군 표는 그 안에서 스크롤 */
   .side{contain:size;min-height:0}
-  .gucard{flex:1;min-height:0;display:flex;flex-direction:column}
+  .gucard,.stcard{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  .cxscroll{flex:1;min-height:0;overflow-y:auto;max-height:none!important}
   .guscroll{flex:1;min-height:0;overflow-y:auto;margin-right:-8px;padding-right:8px}
   .guscroll thead th{position:sticky;top:0;background:var(--panel);z-index:1}}
 #map{height:min(70vh,620px);min-height:380px;border-radius:14px;border:1px solid var(--line);background:var(--sea)}
@@ -62,7 +63,22 @@ select{font:inherit;font-size:14px;padding:6px 8px;border-radius:8px;border:1px 
 .leaflet-control-attribution a{color:var(--muted)!important}
 .leaflet-bar a{background:var(--panel);color:var(--ink);border-color:var(--line)}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cxhead{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 2px;font-size:12px;font-weight:700;color:var(--muted)}
+.cxhead #cx-sum{color:var(--ink)}
+.cxscroll{max-height:260px;overflow-y:auto;margin-right:-8px;padding-right:8px}
+table.cx{table-layout:fixed;width:100%}
+table.cx td{padding:4px 3px;font-size:12.5px}
+table.cx td.d{color:var(--muted);white-space:nowrap;width:70px;text-align:left}
+table.cx td.n{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.cx td.g{color:var(--muted);white-space:nowrap;width:58px;text-align:left;overflow:hidden;text-overflow:ellipsis}
+table.cx td:last-child{width:50px}
+table.cx tr{cursor:pointer}
+table.cx tr:hover td{background:var(--chip)}
+table.cx i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stcard .stat{padding:7px 11px}
+.stcard .stat b{font-size:19px}
+.stcard .ctitle{margin-bottom:6px}
 .stat{background:var(--chip);border-radius:10px;padding:10px 12px}
 .stat b{display:block;font-size:22px;line-height:1.2}
 .stat span{font-size:12px;color:var(--muted)}
@@ -151,14 +167,16 @@ details.note summary{cursor:pointer}
         <table><thead><tr><th>시군구</th><th>세대</th><th>단지</th><th style="width:34%"></th></tr></thead><tbody id="gutab"></tbody></table>
         </div>
       </section>
-      <section class="card">
+      <section class="card stcard">
         <p class="ctitle" id="sel-title">선택 기간</p>
         <div class="stats">
-          <div class="stat"><b class="num" id="s-h">-</b><span>입주 세대</span></div>
           <div class="stat"><b class="num" id="s-n">-</b><span>단지</span></div>
+          <div class="stat"><b class="num" id="s-h">-</b><span>입주 세대</span></div>
           <div class="stat" style="grid-column:1/-1"><span>연평균</span> <b class="num" id="s-avg" style="display:inline;font-size:18px">-</b>
             <span>· 적정 연 <span class="num" id="s-fair"></span>세대</span> <span id="s-pill" class="pill"></span></div>
         </div>
+        <div class="cxhead"><span id="cx-t">입주 단지</span><span class="num" id="cx-sum"></span></div>
+        <div class="cxscroll"><table class="cx"><tbody id="cxtab"></tbody></table></div>
       </section>
     </aside>
   </div>
@@ -355,14 +373,26 @@ function summary(){
   const mark=()=>[...tb.children].forEach(r=>r.classList.toggle('on',r.dataset.gu===(selGu||'')));
   const all=document.createElement('tr');all.className='gu';all.tabIndex=0;all.dataset.gu='';
   all.innerHTML=`<td><b>${DATA.adm||DATA.city}</b></td><td class="num"><b>${fmt(H)}</b></td><td class="num"><b>${on.length}</b></td><td></td>`;
-  const goAll=()=>{goHome();selGu=null;mark()};
+  const goAll=()=>{goHome();selGu=null;mark();cxList()};
   all.onclick=goAll; all.onkeydown=e=>{if(e.key==='Enter')goAll()}; tb.appendChild(all);
   arr.forEach(([n,[h,c]])=>{const tr=document.createElement('tr');tr.className='gu';tr.tabIndex=0;tr.dataset.gu=n;
     tr.innerHTML=`<td>${n}</td><td class="num">${fmt(h)}</td><td class="num">${c}</td><td><div class="bar" style="width:${(h/mx*100).toFixed(0)}%"></div></td>`;
-    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();mark()};
+    const go=()=>{selGu=(selGu===n?null:n);if(selGu)fitGu(n);else goHome();mark();cxList()};
     tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go()}; tb.appendChild(tr)});
-  mark();
+  mark(); cxList();
   if(!arr.length) tb.insertAdjacentHTML('beforeend','<tr><td colspan="4" style="text-align:left;color:var(--muted)">이 기간에는 입주 단지가 없습니다.</td></tr>');
+}
+/* 기간·시군구(선택 시)의 입주 단지 목록 — 입주월 순 */
+function cxList(){
+  const L=DATA.rows.filter(r=>inSel(r)&&(!selGu||r[6]===selGu)).sort((a,b)=>YM(a[3],a[4])-YM(b[3],b[4])||b[5]-a[5]);
+  document.getElementById('cx-t').textContent=`입주 단지 · ${selGu||DATA.adm||DATA.city}`;
+  document.getElementById('cx-sum').textContent=`${fmt(L.length)}단지 · ${fmt(L.reduce((a,r)=>a+r[5],0))}세대`;
+  const tb=document.getElementById('cxtab'); tb.innerHTML='';
+  L.forEach(r=>{const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="d num"><i style="background:${yc(r[3])}"></i>${r[3]}.${String(r[4]).padStart(2,'0')}</td><td class="n" title="${r[0]}">${r[0]}</td>${selGu?'':`<td class="g">${r[6]||''}</td>`}<td class="num">${fmt(r[5])}</td>`;
+    tr.onclick=()=>{if(!map)return;map.setLevel(Math.min(map.getLevel(),5));map.setCenter(new kakao.maps.LatLng(r[1],r[2]));openInfo(r)};
+    tb.appendChild(tr)});
+  if(!L.length) tb.innerHTML='<tr><td style="text-align:left;color:var(--muted)">이 기간에는 입주 단지가 없습니다.</td></tr>';
 }
 function yearBars(){
   const s=document.getElementById('yb'); s.innerHTML='';
