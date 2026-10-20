@@ -78,6 +78,8 @@ table.cx i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-ri
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stcard .stat{padding:7px 11px}
 .stcard .stat b{font-size:19px}
+.stcard .stat.one{padding:5px 11px;font-size:13px;color:var(--muted)}
+.stcard .stat.one b{display:inline;font-size:18px;color:var(--ink);margin-right:2px}
 .stcard .ctitle{margin-bottom:6px}
 .stat{background:var(--chip);border-radius:10px;padding:10px 12px}
 .stat b{display:block;font-size:22px;line-height:1.2}
@@ -170,8 +172,8 @@ details.note summary{cursor:pointer}
       <section class="card stcard">
         <p class="ctitle" id="sel-title">선택 기간</p>
         <div class="stats">
-          <div class="stat"><b class="num" id="s-n">-</b><span>단지</span></div>
-          <div class="stat"><b class="num" id="s-h">-</b><span>입주 세대</span></div>
+          <div class="stat one"><b class="num" id="s-n">-</b>개 단지</div>
+          <div class="stat one"><b class="num" id="s-h">-</b>세대</div>
           <div class="stat" style="grid-column:1/-1"><span>연평균</span> <b class="num" id="s-avg" style="display:inline;font-size:18px">-</b>
             <span>· 적정 연 <span class="num" id="s-fair"></span>세대</span> <span id="s-pill" class="pill"></span></div>
         </div>
@@ -235,7 +237,7 @@ function yc(y){
 const YM=(y,m)=>y*12+m-1, yOf=v=>Math.floor(v/12), mOf=v=>v%12+1, ymLab=v=>`${yOf(v)}.${String(mOf(v)).padStart(2,'0')}`;
 const R0=YM(NOW_Y-4,NOW_M), R1=YM(NOW_Y+4,NOW_M);  /* 슬라이더 범위: 과거 4년 ~ 미래 4년 */
 const inSel=r=>{const v=YM(r[3],r[4]);return v>=sel[0]&&v<=sel[1]};
-let cityBounds=null, home=null, sel=[YM(2025,1),YM(2028,12)], ghost=false,  /* 기간 밖 단지는 표시하지 않음 */ selGu=null;
+let cityBounds=null, home=null, sel=[YM(NOW_Y,NOW_M),YM(NOW_Y+1,NOW_M)],  /* 처음엔 현재 ~ 1년 뒤 */ ghost=false,  /* 기간 밖 단지는 표시하지 않음 */ selGu=null;
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
 /* 사이클 그래프 */
