@@ -97,7 +97,7 @@ details.note summary{cursor:pointer}
 .rng .ytk{position:absolute;top:22px;width:1px;height:11px;background:var(--muted);opacity:.55}
 .rng .nowm{position:absolute;top:0;height:30px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:0}
 .rng .nowm span{font-size:10px;font-weight:700;line-height:1;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-radius:999px;padding:2px 6px;white-space:nowrap}
-.rng .nowm i{display:block;width:9px;height:9px;margin-top:5px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);box-sizing:border-box}
+.rng .nowm i{display:block;width:0;height:0;margin-top:3px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--accent)}
 .rtick .now{color:var(--ink);font-weight:700}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mapleg .lt{font-weight:700;margin-bottom:3px}
@@ -137,6 +137,12 @@ details.note summary{cursor:pointer}
       </div>
     </div>
     <aside class="side">
+      <section class="card gucard">
+        <p class="ctitle">시군구</p>
+        <div class="guscroll">
+        <table><thead><tr><th>시군구</th><th>세대</th><th>단지</th><th style="width:34%"></th></tr></thead><tbody id="gutab"></tbody></table>
+        </div>
+      </section>
       <section class="card">
         <p class="ctitle" id="sel-title">선택 기간</p>
         <div class="stats">
@@ -144,12 +150,6 @@ details.note summary{cursor:pointer}
           <div class="stat"><b class="num" id="s-n">-</b><span>단지</span></div>
           <div class="stat" style="grid-column:1/-1"><span>연평균</span> <b class="num" id="s-avg" style="display:inline;font-size:18px">-</b>
             <span>· 적정 연 <span class="num" id="s-fair"></span>세대</span> <span id="s-pill" class="pill"></span></div>
-        </div>
-      </section>
-      <section class="card gucard">
-        <p class="ctitle">구·군별</p>
-        <div class="guscroll">
-        <table><thead><tr><th>구·군</th><th>세대</th><th>단지</th><th style="width:34%"></th></tr></thead><tbody id="gutab"></tbody></table>
         </div>
       </section>
     </aside>
