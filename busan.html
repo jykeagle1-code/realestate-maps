@@ -68,18 +68,23 @@ td,th{padding:5px 4px;text-align:right;border-bottom:1px solid var(--line)}
 th{font-weight:500;color:var(--muted);font-size:12px}
 td:first-child,th:first-child{text-align:left}
 tr.gu{cursor:pointer}
+tr.gu td{transition:background .18s,color .18s}
 tr.gu:hover td{background:var(--chip)}
+tr.gu.on td{background:color-mix(in srgb,var(--accent) 11%,var(--panel));color:var(--ink);font-weight:700;border-bottom-color:transparent}
+tr.gu.on td:first-child{box-shadow:inset 3px 0 0 var(--accent);color:var(--accent);padding-left:10px;border-radius:6px 0 0 6px}
+tr.gu.on td:last-child{border-radius:0 6px 6px 0}
+tr.gu.on .bar{opacity:1}
 .bar{height:8px;border-radius:4px;background:var(--over);opacity:.75}
 details.note summary{cursor:pointer}
 .scope{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-weight:600;vertical-align:1px}
 .note{font-size:12px;color:var(--faint);margin:0}
 .rlab{font-size:14px}
 .rlab b{font-size:17px;color:var(--accent)}
-.rng{position:relative;height:30px;margin:6px 8px 0}
-.rng .trk,.rng .fill{position:absolute;top:13px;height:5px;border-radius:3px}
+.rng{position:relative;height:42px;margin:4px 8px 0}
+.rng .trk,.rng .fill{position:absolute;top:25px;height:5px;border-radius:3px}
 .rng .trk{left:0;right:0;background:var(--line)}
 .rng .fill{background:var(--accent)}
-.rng input{position:absolute;left:-8px;width:calc(100% + 16px);top:0;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.rng input{position:absolute;left:-8px;width:calc(100% + 16px);top:12px;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
 .rng input::-webkit-slider-runnable-track{background:none;border:0}
 .rng input::-moz-range-track{background:none;border:0}
 .rng input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:20px;height:20px;border-radius:50%;background:var(--panel);border:2.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
@@ -89,8 +94,10 @@ details.note summary{cursor:pointer}
 .mapwrap{min-width:0;align-self:start;display:flex;flex-direction:column;gap:8px}
 .mapbox{position:relative}
 .period{padding:10px 14px 6px}
-.rng .ytk{position:absolute;top:10px;width:1px;height:11px;background:var(--muted);opacity:.55}
-.rng .nowm{position:absolute;top:7px;width:2px;height:17px;margin-left:-1px;background:var(--ink);border-radius:1px}
+.rng .ytk{position:absolute;top:22px;width:1px;height:11px;background:var(--muted);opacity:.55}
+.rng .nowm{position:absolute;top:0;height:30px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:0}
+.rng .nowm span{font-size:10px;font-weight:700;line-height:1;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-radius:999px;padding:2px 6px;white-space:nowrap}
+.rng .nowm i{display:block;width:9px;height:9px;margin-top:5px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);box-sizing:border-box}
 .rtick .now{color:var(--ink);font-weight:700}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mapleg .lt{font-weight:700;margin-bottom:3px}
@@ -329,7 +336,7 @@ function summary(){
   const g={}; on.forEach(r=>{g[r[6]]=g[r[6]]||[0,0];g[r[6]][0]+=r[5];g[r[6]][1]++});
   const arr=Object.entries(g).sort((a,b)=>b[1][0]-a[1][0]), mx=arr.length?arr[0][1][0]:1;
   const tb=document.getElementById('gutab'); tb.innerHTML='';
-  const mark=()=>[...tb.children].forEach(r=>r.style.boxShadow=(r.dataset.gu===(selGu||''))?'inset 0 0 0 2px var(--accent)':'');
+  const mark=()=>[...tb.children].forEach(r=>r.classList.toggle('on',r.dataset.gu===(selGu||'')));
   const all=document.createElement('tr');all.className='gu';all.tabIndex=0;all.dataset.gu='';
   all.innerHTML=`<td><b>${DATA.adm||DATA.city}</b></td><td class="num"><b>${fmt(H)}</b></td><td class="num"><b>${on.length}</b></td><td></td>`;
   const goAll=()=>{goHome();selGu=null;mark()};
@@ -381,7 +388,7 @@ const s0=document.getElementById('y0'), s1=document.getElementById('y1');
 const cl=v=>Math.max(R0,Math.min(R1,v)), pct=v=>(cl(v)-R0)/(R1-R0)*100;
 document.getElementById('rtick').innerHTML=[...Array(yOf(R1)-yOf(R0)).keys()].map(i=>yOf(R0)+1+i).map(y=>`<span style="left:${pct(YM(y,1))}%"${y===NOW_Y?' class="now"':''}>${y}</span>`).join('');
 [...Array(yOf(R1)-yOf(R0)).keys()].forEach(i=>{const t=document.createElement('div');t.className='ytk';t.style.left=pct(YM(yOf(R0)+1+i,1))+'%';document.querySelector('.rng').prepend(t)});
-{const n=document.createElement('div');n.className='nowm';n.style.left=pct(YM(NOW_Y,NOW_M))+'%';n.title='현재';document.querySelector('.rng').prepend(n)}
+{const n=document.createElement('div');n.className='nowm';n.style.left=pct(YM(NOW_Y,NOW_M))+'%';n.innerHTML=`<span>현재 ${String(NOW_Y).slice(2)}.${String(NOW_M).padStart(2,'0')}</span><i></i>`;document.querySelector('.rng').prepend(n)}
 let raf=0; const later=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(update)};
 /* 두 손잡이가 같은 해에 겹쳐 있을 때는 끄는 방향에 따라 시작·끝 중 맞는 쪽이 움직인다 */
 s0.oninput=()=>{const v=+s0.value; sel=v<=sel[1]?[v,sel[1]]:(sel[0]===sel[1]?[sel[0],v]:[sel[1],sel[1]]); later()};
