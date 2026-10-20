@@ -68,6 +68,19 @@ tr.gu:hover td{background:var(--chip)}
 details.note summary{cursor:pointer}
 .scope{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-weight:600;vertical-align:1px}
 .note{font-size:12px;color:var(--faint);margin:0}
+.rlab{font-size:15px}
+.rlab b{font-size:18px;color:var(--accent)}
+.rng{position:relative;height:30px;margin:6px 8px 0}
+.rng .trk,.rng .fill{position:absolute;top:13px;height:5px;border-radius:3px}
+.rng .trk{left:0;right:0;background:var(--line)}
+.rng .fill{background:var(--accent)}
+.rng input{position:absolute;left:-8px;width:calc(100% + 16px);top:0;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.rng input::-webkit-slider-runnable-track{background:none;border:0}
+.rng input::-moz-range-track{background:none;border:0}
+.rng input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:20px;height:20px;border-radius:50%;background:var(--panel);border:2.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
+.rng input::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:var(--panel);border:2.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
+.rtick{position:relative;height:16px;margin:0 8px;font-size:11px;color:var(--muted)}
+.rtick span{position:absolute;transform:translateX(-50%)}
 .mapwrap{position:relative;min-width:0;align-self:start}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mapleg .lt{font-weight:700;margin-bottom:3px}
@@ -88,22 +101,20 @@ details.note summary{cursor:pointer}
   </header>
 
   <section class="card" aria-label="기간 선택">
-    <div class="ctrl">
-      <label for="y0">시작</label><select id="y0"></select>
-      <label for="y1">끝</label><select id="y1"></select>
-      <span style="flex:1"></span>
+    <div class="ctrl" style="justify-content:space-between">
+      <span class="rlab num"><b id="rl0"></b> ~ <b id="rl1"></b>년 입주</span>
       <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ghost" checked> 기간 밖 흐리게</label>
     </div>
-    <div class="ctrl" id="presets" style="margin-top:10px"></div>
+    <div class="rng">
+      <div class="trk"></div><div class="fill" id="rfill"></div>
+      <input type="range" id="y0" aria-label="시작 연도"><input type="range" id="y1" aria-label="끝 연도">
+    </div>
+    <div class="rtick num" id="rtick"></div>
   </section>
 
   <div class="main">
     <div class="mapwrap">
       <div id="map" role="region" aria-label="입주 단지 지도"></div>
-      <div class="mapleg" style="left:10px;top:10px;right:auto;bottom:auto" aria-label="원 크기 범례">
-        <div class="lt">원 크기(세대)</div>
-        <div class="sizeleg" id="sizeleg"></div>
-      </div>
       <div class="mapleg" aria-label="입주 연도 범례">
         <div class="lt">입주 연도</div>
         <div class="yl" id="yearleg"></div>
@@ -283,7 +294,7 @@ function styleMarks(){ if(!map) return;
 function mPerPx(){const p=map.getProjection(),c=map.getCenter(),a=p.pointFromCoords(c),b=p.containerPointFromCoords?null:null;
   const ll2=p.coordsFromPoint(new kakao.maps.Point(a.x+100,a.y));
   const R=6371000,toR=Math.PI/180,dl=(ll2.getLng()-c.getLng())*toR*Math.cos(c.getLat()*toR);return Math.abs(dl*R)/100}
-function sizeLegend(){ if(!map) return; const mpp=mPerPx();
+function sizeLegend(){ if(!map||!document.getElementById('sizeleg')) return; const mpp=mPerPx();
   document.getElementById('sizeleg').innerHTML=[500,1000,2000].map(h=>{const r=Math.max(2,radM(h)/(mppHome||mpp));return `<div><i style="width:${2*r}px;height:${2*r}px"></i>${fmt(h)}</div>`}).join('');}
 const guLayers={get:n=>guPolys[n]};
 function goHome(){if(home){map.setLevel(home[1]);map.setCenter(home[0])}else if(cityBounds)map.setBounds(cityBounds)}
@@ -351,15 +362,19 @@ function ramp(){const box=document.getElementById('yearleg'); box.innerHTML='';
 }
 /* 컨트롤 */
 const s0=document.getElementById('y0'), s1=document.getElementById('y1');
-for(let y=Y_MIN;y<=Y_MAX;y++){s0.add(new Option(y,y));s1.add(new Option(y,y))}
-s0.onchange=()=>{sel=[+s0.value,Math.max(+s0.value,sel[1])];update()};
-s1.onchange=()=>{sel=[Math.min(sel[0],+s1.value),+s1.value];update()};
+[s0,s1].forEach(i=>{i.min=Y_MIN;i.max=Y_MAX;i.step=1});
+const pct=y=>(y-Y_MIN)/(Y_MAX-Y_MIN)*100;
+document.getElementById('rtick').innerHTML=[...Array(Y_MAX-Y_MIN+1).keys()].map(i=>Y_MIN+i).filter(y=>y%5===0||y===Y_MAX).map(y=>`<span style="left:${pct(y)}%">${y}</span>`).join('');
+let raf=0; const later=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(update)};
+/* 두 손잡이가 같은 해에 겹쳐 있을 때는 끄는 방향에 따라 시작·끝 중 맞는 쪽이 움직인다 */
+s0.oninput=()=>{const v=+s0.value; sel=v<=sel[1]?[v,sel[1]]:(sel[0]===sel[1]?[sel[0],v]:[sel[1],sel[1]]); later()};
+s1.oninput=()=>{const v=+s1.value; sel=v>=sel[0]?[sel[0],v]:(sel[0]===sel[1]?[v,sel[1]]:[sel[0],sel[0]]); later()};
+/* 두 손잡이가 겹치면 끝 손잡이를 위로: 왼쪽 끝에 몰렸을 때는 시작 손잡이를 위로 */
+const zfix=()=>{s0.style.zIndex=sel[0]>=Y_MAX-1?3:1;s1.style.zIndex=2};
 document.getElementById('ghost').onchange=e=>{ghost=e.target.checked;styleMarks()};
-const PRE=[['예정 입주',[NOW_Y,Y_MAX]],['최근 3년 + 예정',[NOW_Y-3,Y_MAX]],['2017~2020 대량 입주',[2017,2020]],['2004~2006 대량 입주',[2004,2006]],['전체',[Y_MIN,Y_MAX]]];
-const pre=document.getElementById('presets');
-PRE.forEach(([n,r])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.onclick=()=>{sel=[...r];update()};b.dataset.r=r.join('-');pre.appendChild(b)});
-function update(){s0.value=sel[0];s1.value=sel[1];
-  pre.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===sel.join('-')));
+function update(){s0.value=sel[0];s1.value=sel[1];zfix();
+  const f=document.getElementById('rfill');f.style.left=pct(sel[0])+'%';f.style.width=Math.max(.6,pct(sel[1])-pct(sel[0]))+'%';
+  document.getElementById('rl0').textContent=sel[0];document.getElementById('rl1').textContent=sel[1];
   document.querySelectorAll('#yearleg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===sel.join('-')));
   
   drawCycle();styleMarks();summary();yearBars()}
