@@ -39,7 +39,12 @@ select{font:inherit;font-size:14px;padding:6px 8px;border-radius:8px;border:1px 
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12px;color:var(--muted)}
 .ramp{height:10px;width:180px;border-radius:5px}
 .main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
-@media (min-width:920px){.main{grid-template-columns:minmax(0,1fr) 330px}}
+@media (min-width:920px){.main{grid-template-columns:minmax(0,1fr) 330px}
+  /* 오른쪽 열은 왼쪽(지도+기간 막대) 높이까지만, 구·군 표는 그 안에서 스크롤 */
+  .side{contain:size;min-height:0}
+  .gucard{flex:1;min-height:0;display:flex;flex-direction:column}
+  .guscroll{flex:1;min-height:0;overflow-y:auto;margin-right:-8px;padding-right:8px}
+  .guscroll thead th{position:sticky;top:0;background:var(--panel);z-index:1}}
 #map{height:min(70vh,620px);min-height:380px;border-radius:14px;border:1px solid var(--line);background:var(--sea)}
 .leaflet-container{font-family:var(--f-body);background:var(--sea)}
 .gu-label{background:transparent;border:0;box-shadow:none;color:var(--faint);font-weight:700;font-size:12px;padding:0}
@@ -134,9 +139,11 @@ details.note summary{cursor:pointer}
             <span>· 적정 연 <span class="num" id="s-fair"></span>세대</span> <span id="s-pill" class="pill"></span></div>
         </div>
       </section>
-      <section class="card">
+      <section class="card gucard">
         <p class="ctitle">구·군별</p>
+        <div class="guscroll">
         <table><thead><tr><th>구·군</th><th>세대</th><th>단지</th><th style="width:34%"></th></tr></thead><tbody id="gutab"></tbody></table>
+        </div>
       </section>
     </aside>
   </div>
@@ -322,7 +329,7 @@ function summary(){
   const g={}; on.forEach(r=>{g[r[6]]=g[r[6]]||[0,0];g[r[6]][0]+=r[5];g[r[6]][1]++});
   const arr=Object.entries(g).sort((a,b)=>b[1][0]-a[1][0]), mx=arr.length?arr[0][1][0]:1;
   const tb=document.getElementById('gutab'); tb.innerHTML='';
-  const mark=()=>[...tb.children].forEach(r=>r.style.outline=(r.dataset.gu===(selGu||''))?'2px solid var(--accent)':'');
+  const mark=()=>[...tb.children].forEach(r=>r.style.boxShadow=(r.dataset.gu===(selGu||''))?'inset 0 0 0 2px var(--accent)':'');
   const all=document.createElement('tr');all.className='gu';all.tabIndex=0;all.dataset.gu='';
   all.innerHTML=`<td><b>${DATA.adm||DATA.city}</b></td><td class="num"><b>${fmt(H)}</b></td><td class="num"><b>${on.length}</b></td><td></td>`;
   const goAll=()=>{goHome();selGu=null;mark()};
