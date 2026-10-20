@@ -123,6 +123,7 @@ details.note summary{cursor:pointer}
     <svg id="cyc" viewBox="0 0 1000 215" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
     <div class="legend">
             <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--price)" stroke-width="3"/></svg> 매매지수</span>
+      <span><svg width="12" height="12"><circle cx="6" cy="6" r="4" style="fill:var(--panel);stroke:var(--price)" stroke-width="2"/></svg> 사이클 고점</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--guline)" stroke-width="2" stroke-dasharray="5 3"/></svg> 선택한 구</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--over)" opacity=".7"/></svg> 입주 과다</span>
       <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--under)"/></svg> 적정 이하</span>
@@ -205,10 +206,18 @@ function drawCycle(){
   if(pr.length) tx(X0-6,30,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
   tx(X0-6,176,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
   if(!pr.length) return;
-  const pk=pr.reduce((a,b)=>b[1]>a[1]?b:a); const px=x(+pk[0].slice(0,4),+pk[0].slice(5,7));
-  el('circle',{cx:px,cy:py(pk[1]),r:4.5,fill:V('--panel'),stroke:V('--price'),'stroke-width':2});
+  /* 사이클 고점: 고점 뒤 5% 이상 하락해야 고점으로 인정(지그재그) */
+  const peaks=[]; let hiP=pr[0], loP=pr[0], up=true;
+  pr.forEach(p=>{ if(up){ if(p[1]>hiP[1]) hiP=p; else if(p[1]<hiP[1]*.95){peaks.push(hiP);up=false;loP=p} }
+    else { if(p[1]<loP[1]) loP=p; else if(p[1]>loP[1]*1.05){up=true;hiP=p} } });
+  const kx=k=>x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31);
+  peaks.forEach(pk=>{const X=kx(pk[0]),Y=py(pk[1]);
+    el('circle',{cx:X,cy:Y,r:4.5,fill:V('--panel'),stroke:V('--price'),'stroke-width':2});
+    tx(X,Y-9,'고점 '+pk[0].slice(2,4)+'.'+pk[0].slice(5,7),{'text-anchor':'middle',fill:V('--price'),'font-weight':700,'font-size':11,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3})});
   if(pg.length){const l=pg[pg.length-1];tx(x(+l[0].slice(0,4),+l[0].slice(5,7))+4,py(l[1])+4,selGu,{fill:V('--guline'),'font-weight':700})}
-  tx(px,py(pk[1])-9,'고점 '+pk[0].slice(2,4)+'.'+pk[0].slice(5,7),{'text-anchor':'middle',fill:V('--price'),'font-weight':700});
+  if(peaks.length){const pk=peaks[peaks.length-1], cur=pr[pr.length-1], r=(cur[1]/pk[1]-1)*100, Y=py(pk[1]);
+    el('line',{x1:kx(pk[0]),x2:kx(cur[0]),y1:Y,y2:Y,stroke:V('--price'),'stroke-dasharray':'3 3','stroke-width':1.2,opacity:.8});
+    tx(kx(cur[0])+5,Y+(r<0?4:-6),r<0?`전고점 ${r.toFixed(0)}%`:`전고점 돌파 +${r.toFixed(0)}%`,{fill:V('--price'),'font-weight':700,'font-size':11,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3})}
 }
 
 /* 지도 (카카오맵) */
@@ -299,7 +308,7 @@ function yearBars(){
     const hit=el('rect',{x:X0+i*W,y:6,width:W,height:120,fill:'transparent',style:'cursor:pointer'});
     hit.addEventListener('click',()=>{sel=[y,y];update()});
     const t=document.createElementNS(NS,'title');t.textContent=`${y}년 ${fmt(v)}세대`;hit.appendChild(t);
-    if(y%5===0||y===Y_MAX){const tt=el('text',{x:X0+i*W+W/2,y:125,'font-size':12,'text-anchor':'middle',fill:V('--muted')});tt.textContent=y}});
+    if(y%5===0||(y===Y_MAX&&y%5>1)){const tt=el('text',{x:X0+i*W+W/2,y:125,'font-size':12,'text-anchor':'middle',fill:V('--muted')});tt.textContent=y}});
   el('line',{x1:X0,x2:960,y1:sy(FAIR_Y),y2:sy(FAIR_Y),stroke:V('--muted'),'stroke-dasharray':'4 4'});
   const t=el('text',{x:962,y:sy(FAIR_Y)+4,'font-size':11,fill:V('--muted')});t.textContent='적정';
   [10000,20000,30000].filter(v=>v<mx).forEach(v=>{const e=el('text',{x:X0-6,y:sy(v)+4,'font-size':11,'text-anchor':'end',fill:V('--faint')});e.textContent=v/10000+'만'});
