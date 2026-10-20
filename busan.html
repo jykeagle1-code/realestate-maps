@@ -68,8 +68,8 @@ tr.gu:hover td{background:var(--chip)}
 details.note summary{cursor:pointer}
 .scope{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-weight:600;vertical-align:1px}
 .note{font-size:12px;color:var(--faint);margin:0}
-.rlab{font-size:15px}
-.rlab b{font-size:18px;color:var(--accent)}
+.rlab{font-size:14px}
+.rlab b{font-size:17px;color:var(--accent)}
 .rng{position:relative;height:30px;margin:6px 8px 0}
 .rng .trk,.rng .fill{position:absolute;top:13px;height:5px;border-radius:3px}
 .rng .trk{left:0;right:0;background:var(--line)}
@@ -81,7 +81,11 @@ details.note summary{cursor:pointer}
 .rng input::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:var(--panel);border:2.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
 .rtick{position:relative;height:16px;margin:0 8px;font-size:11px;color:var(--muted)}
 .rtick span{position:absolute;transform:translateX(-50%)}
-.mapwrap{position:relative;min-width:0;align-self:start}
+.mapwrap{min-width:0;align-self:start;display:flex;flex-direction:column;gap:8px}
+.mapbox{position:relative}
+.period{padding:10px 14px 6px}
+.rng .nowm{position:absolute;top:7px;width:2px;height:17px;margin-left:-1px;background:var(--ink);border-radius:1px}
+.rtick .now{color:var(--ink);font-weight:700}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mapleg .lt{font-weight:700;margin-bottom:3px}
 .yl{display:flex;flex-direction:column;gap:1px}
@@ -100,24 +104,25 @@ details.note summary{cursor:pointer}
     <p class="sub">원 크기 = 세대수 · 색 = 입주 연도</p>
   </header>
 
-  <section class="card" aria-label="기간 선택">
-    <div class="ctrl" style="justify-content:space-between">
-      <span class="rlab num"><b id="rl0"></b> ~ <b id="rl1"></b>년 입주</span>
-      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ghost" checked> 기간 밖 흐리게</label>
-    </div>
-    <div class="rng">
-      <div class="trk"></div><div class="fill" id="rfill"></div>
-      <input type="range" id="y0" aria-label="시작 연도"><input type="range" id="y1" aria-label="끝 연도">
-    </div>
-    <div class="rtick num" id="rtick"></div>
-  </section>
-
   <div class="main">
     <div class="mapwrap">
-      <div id="map" role="region" aria-label="입주 단지 지도"></div>
-      <div class="mapleg" aria-label="입주 연도 범례">
-        <div class="lt">입주 연도</div>
-        <div class="yl" id="yearleg"></div>
+      <div class="mapbox">
+        <div id="map" role="region" aria-label="입주 단지 지도"></div>
+        <div class="mapleg" aria-label="입주 연도 범례">
+          <div class="lt">입주 연도</div>
+          <div class="yl" id="yearleg"></div>
+        </div>
+      </div>
+      <div class="card period" aria-label="기간 선택">
+        <div class="ctrl" style="justify-content:space-between">
+          <span class="rlab num"><b id="rl0"></b> ~ <b id="rl1"></b> 입주</span>
+          <label style="display:flex;gap:6px;align-items:center;font-size:12px"><input type="checkbox" id="ghost" checked> 기간 밖 흐리게</label>
+        </div>
+        <div class="rng">
+          <div class="trk"></div><div class="fill" id="rfill"></div>
+          <input type="range" id="y0" aria-label="시작 월"><input type="range" id="y1" aria-label="끝 월">
+        </div>
+        <div class="rtick num" id="rtick"></div>
       </div>
     </div>
     <aside class="side">
@@ -180,7 +185,10 @@ function yc(y){
   const t=(y-Y_MIN)/(NOW_Y-1-Y_MIN);
   return isDark()?mix('#4B5258','#C9CED3',t):mix('#DAD8D0','#5E5D57',t);
 }
-let cityBounds=null, home=null, sel=[2025,Math.min(2028,Y_MAX)], ghost=true, selGu=null;
+const YM=(y,m)=>y*12+m-1, yOf=v=>Math.floor(v/12), mOf=v=>v%12+1, ymLab=v=>`${yOf(v)}.${String(mOf(v)).padStart(2,'0')}`;
+const R0=YM(NOW_Y-4,NOW_M), R1=YM(NOW_Y+4,NOW_M);  /* 슬라이더 범위: 과거 4년 ~ 미래 4년 */
+const inSel=r=>{const v=YM(r[3],r[4]);return v>=sel[0]&&v<=sel[1]};
+let cityBounds=null, home=null, sel=[YM(2025,1),YM(2028,12)], ghost=true, selGu=null;
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
 /* 사이클 그래프 */
@@ -196,7 +204,7 @@ function drawCycle(){
   const X0=56,X1=985,T0=2000,T1=2031, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
   const NS='http://www.w3.org/2000/svg', el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
   for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
-  el('rect',{x:x(sel[0]),y:8,width:x(sel[1]+1)-x(sel[0]),height:177,fill:V('--band')});
+  el('rect',{x:x(yOf(sel[0]),mOf(sel[0])),y:8,width:x(yOf(sel[1]+1),mOf(sel[1]+1))-x(yOf(sel[0]),mOf(sel[0])),height:177,fill:V('--band')});
   const pr=smooth4(DATA.price||[]), pg=[] /* 그래프는 구 선택과 무관하게 도시 전체 고정 */, vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
   if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
@@ -286,7 +294,7 @@ function openInfo(r){
   overlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(r[1],r[2]),content:div,yAnchor:1,zIndex:10});
 }
 function styleMarks(){ if(!map) return;
-  circles.forEach(c=>{const y=c.r[3],on=y>=sel[0]&&y<=sel[1],col=yc(y);
+  circles.forEach(c=>{const y=c.r[3],on=inSel(c.r),col=yc(y);
     c.setOptions({strokeColor:dk(col),fillColor:col,fillOpacity:on?.62:(ghost?.1:0),strokeOpacity:on?.95:(ghost?.25:0),strokeWeight:on?1.4:1});
     c.setZIndex(on?2:1);});
   sizeLegend();
@@ -302,9 +310,9 @@ function fitGu(n){const p=guPolys[n];if(!p)return;const b=new kakao.maps.LatLngB
 
 /* 요약·구별·연도 막대 */
 function summary(){
-  const on=DATA.rows.filter(r=>r[3]>=sel[0]&&r[3]<=sel[1]);
-  const H=on.reduce((a,r)=>a+r[5],0), yrs=sel[1]-sel[0]+1, avg=H/yrs;
-  document.getElementById('sel-title').textContent=sel[0]===sel[1]?`${sel[0]}년 입주`:`${sel[0]}~${sel[1]}년 입주`;
+  const on=DATA.rows.filter(inSel);
+  const H=on.reduce((a,r)=>a+r[5],0), yrs=(sel[1]-sel[0]+1)/12, avg=H/yrs;
+  document.getElementById('sel-title').textContent=sel[0]===sel[1]?`${ymLab(sel[0])} 입주`:`${ymLab(sel[0])} ~ ${ymLab(sel[1])} 입주`;
   document.getElementById('s-h').textContent=fmt(H);
   document.getElementById('s-n').textContent=fmt(on.length);
   document.getElementById('s-avg').textContent=fmt(avg);
@@ -332,10 +340,10 @@ function yearBars(){
   const by={}; DATA.rows.forEach(r=>by[r[3]]=(by[r[3]]||0)+r[5]);
   const ys=[]; for(let y=Y_MIN;y<=Y_MAX;y++) ys.push(y);
   const mx=Math.max(FAIR_Y,...Object.values(by)), X0=40, W=(960-X0)/ys.length, sy=v=>108-v/mx*98;
-  ys.forEach((y,i)=>{const v=by[y]||0,on=y>=sel[0]&&y<=sel[1];
+  ys.forEach((y,i)=>{const v=by[y]||0,on=YM(y,12)>=sel[0]&&YM(y,1)<=sel[1];
     const r=el('rect',{x:X0+i*W+2,y:sy(v),width:W-4,height:108-sy(v),rx:2,fill:yc(y),'fill-opacity':on?.95:.3});
     const hit=el('rect',{x:X0+i*W,y:6,width:W,height:120,fill:'transparent',style:'cursor:pointer'});
-    hit.addEventListener('click',()=>{sel=[y,y];update()});
+    hit.addEventListener('click',()=>{sel=[YM(y,1),YM(y,12)];update()});
     const t=document.createElementNS(NS,'title');t.textContent=`${y}년 ${fmt(v)}세대`;hit.appendChild(t);
     if(y%5===0||(y===Y_MAX&&y%5>1)){const tt=el('text',{x:X0+i*W+W/2,y:125,'font-size':12,'text-anchor':'middle',fill:V('--muted')});tt.textContent=y}});
   el('line',{x1:X0,x2:960,y1:sy(FAIR_Y),y2:sy(FAIR_Y),stroke:V('--muted'),'stroke-dasharray':'4 4'});
@@ -353,28 +361,29 @@ function yearBars(){
   const L=P[P.length-1], e=el('text',{x:kx(L[0])+4,y:py(L[1])+4,'font-size':11,fill:V('--price'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3,'pointer-events':'none'});e.textContent='가격';
 }
 function ramp(){const box=document.getElementById('yearleg'); box.innerHTML='';
-  const past=[Y_MIN,NOW_Y-1], g=`linear-gradient(90deg,${yc(Y_MIN)},${yc(NOW_Y-1)})`;
+  const past=[R0,YM(NOW_Y-1,12)], g=`linear-gradient(90deg,${yc(Y_MIN)},${yc(NOW_Y-1)})`;
   const mk=(html,r,lab)=>{const b=document.createElement('button');b.type='button';b.innerHTML=html;b.dataset.r=r.join('-');b.setAttribute('aria-label',lab);
-    b.onclick=()=>{sel=(sel.join('-')===b.dataset.r)?[Y_MIN,Y_MAX]:[...r];update()};box.appendChild(b)};
-  mk('<i style="background:none;border:1px dashed var(--muted)"></i>전체',[Y_MIN,Y_MAX],'전체 연도');
-  mk(`<i style="background:${g}"></i>~${NOW_Y-1}`,past,`${NOW_Y-1}년까지`);
-  for(let y=NOW_Y;y<=Y_MAX;y++){const c=yc(y);mk(`<i style="background:${c};border:1px solid ${dk(c)}"></i>${y}`,[y,y],`${y}년`)}
+    b.onclick=()=>{sel=(sel.join('-')===b.dataset.r)?[R0,R1]:[...r];update()};box.appendChild(b)};
+  mk('<i style="background:none;border:1px dashed var(--muted)"></i>전체',[R0,R1],'전체 기간');
+  mk(`<i style="background:${g}"></i>${yOf(R0)}~${NOW_Y-1}`,past,`${NOW_Y-1}년까지`);
+  for(let y=NOW_Y;y<=Y_MAX;y++){const c=yc(y);mk(`<i style="background:${c};border:1px solid ${dk(c)}"></i>${y}`,[YM(y,1),YM(y,12)],`${y}년`)}
 }
 /* 컨트롤 */
 const s0=document.getElementById('y0'), s1=document.getElementById('y1');
-[s0,s1].forEach(i=>{i.min=Y_MIN;i.max=Y_MAX;i.step=1});
-const pct=y=>(y-Y_MIN)/(Y_MAX-Y_MIN)*100;
-document.getElementById('rtick').innerHTML=[...Array(Y_MAX-Y_MIN+1).keys()].map(i=>Y_MIN+i).filter(y=>y%5===0||y===Y_MAX).map(y=>`<span style="left:${pct(y)}%">${y}</span>`).join('');
+[s0,s1].forEach(i=>{i.min=R0;i.max=R1;i.step=1});
+const cl=v=>Math.max(R0,Math.min(R1,v)), pct=v=>(cl(v)-R0)/(R1-R0)*100;
+document.getElementById('rtick').innerHTML=[...Array(yOf(R1)-yOf(R0)).keys()].map(i=>yOf(R0)+1+i).map(y=>`<span style="left:${pct(YM(y,1))}%"${y===NOW_Y?' class="now"':''}>${y}</span>`).join('');
+{const n=document.createElement('div');n.className='nowm';n.style.left=pct(YM(NOW_Y,NOW_M))+'%';n.title='현재';document.querySelector('.rng').prepend(n)}
 let raf=0; const later=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(update)};
 /* 두 손잡이가 같은 해에 겹쳐 있을 때는 끄는 방향에 따라 시작·끝 중 맞는 쪽이 움직인다 */
 s0.oninput=()=>{const v=+s0.value; sel=v<=sel[1]?[v,sel[1]]:(sel[0]===sel[1]?[sel[0],v]:[sel[1],sel[1]]); later()};
 s1.oninput=()=>{const v=+s1.value; sel=v>=sel[0]?[sel[0],v]:(sel[0]===sel[1]?[v,sel[1]]:[sel[0],sel[0]]); later()};
 /* 두 손잡이가 겹치면 끝 손잡이를 위로: 왼쪽 끝에 몰렸을 때는 시작 손잡이를 위로 */
-const zfix=()=>{s0.style.zIndex=sel[0]>=Y_MAX-1?3:1;s1.style.zIndex=2};
+const zfix=()=>{s0.style.zIndex=sel[0]>=R1-1?3:1;s1.style.zIndex=2};
 document.getElementById('ghost').onchange=e=>{ghost=e.target.checked;styleMarks()};
-function update(){s0.value=sel[0];s1.value=sel[1];zfix();
+function update(){s0.value=cl(sel[0]);s1.value=cl(sel[1]);zfix();
   const f=document.getElementById('rfill');f.style.left=pct(sel[0])+'%';f.style.width=Math.max(.6,pct(sel[1])-pct(sel[0]))+'%';
-  document.getElementById('rl0').textContent=sel[0];document.getElementById('rl1').textContent=sel[1];
+  document.getElementById('rl0').textContent=ymLab(sel[0]);document.getElementById('rl1').textContent=ymLab(sel[1]);
   document.querySelectorAll('#yearleg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===sel.join('-')));
   
   drawCycle();styleMarks();summary();yearBars()}
