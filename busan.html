@@ -84,6 +84,7 @@ details.note summary{cursor:pointer}
 .mapwrap{min-width:0;align-self:start;display:flex;flex-direction:column;gap:8px}
 .mapbox{position:relative}
 .period{padding:10px 14px 6px}
+.rng .ytk{position:absolute;top:10px;width:1px;height:11px;background:var(--muted);opacity:.55}
 .rng .nowm{position:absolute;top:7px;width:2px;height:17px;margin-left:-1px;background:var(--ink);border-radius:1px}
 .rtick .now{color:var(--ink);font-weight:700}
 .mapleg{position:absolute;right:10px;bottom:10px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
@@ -101,7 +102,6 @@ details.note summary{cursor:pointer}
 <div class="wrap">
   <header>
     <h1>부산 입주 지도</h1>
-    <p class="sub">원 크기 = 세대수 · 색 = 입주 연도</p>
   </header>
 
   <div class="main">
@@ -115,8 +115,7 @@ details.note summary{cursor:pointer}
       </div>
       <div class="card period" aria-label="기간 선택">
         <div class="ctrl" style="justify-content:space-between">
-          <span class="rlab num"><b id="rl0"></b> ~ <b id="rl1"></b> 입주</span>
-          <label style="display:flex;gap:6px;align-items:center;font-size:12px"><input type="checkbox" id="ghost" checked> 기간 밖 흐리게</label>
+          <span class="rlab num"><b id="rl0"></b> ~ <b id="rl1"></b></span>
         </div>
         <div class="rng">
           <div class="trk"></div><div class="fill" id="rfill"></div>
@@ -188,7 +187,7 @@ function yc(y){
 const YM=(y,m)=>y*12+m-1, yOf=v=>Math.floor(v/12), mOf=v=>v%12+1, ymLab=v=>`${yOf(v)}.${String(mOf(v)).padStart(2,'0')}`;
 const R0=YM(NOW_Y-4,NOW_M), R1=YM(NOW_Y+4,NOW_M);  /* 슬라이더 범위: 과거 4년 ~ 미래 4년 */
 const inSel=r=>{const v=YM(r[3],r[4]);return v>=sel[0]&&v<=sel[1]};
-let cityBounds=null, home=null, sel=[YM(2025,1),YM(2028,12)], ghost=true, selGu=null;
+let cityBounds=null, home=null, sel=[YM(2025,1),YM(2028,12)], ghost=false,  /* 기간 밖 단지는 표시하지 않음 */ selGu=null;
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
 /* 사이클 그래프 */
@@ -295,6 +294,7 @@ function openInfo(r){
 }
 function styleMarks(){ if(!map) return;
   circles.forEach(c=>{const y=c.r[3],on=inSel(c.r),col=yc(y);
+    const vis=on||ghost; if(!!c.getMap()!==vis) c.setMap(vis?map:null); if(!vis) return;  /* 기간 밖 단지는 지도에서 뺌(마우스 반응도 없음) */
     c.setOptions({strokeColor:dk(col),fillColor:col,fillOpacity:on?.62:(ghost?.1:0),strokeOpacity:on?.95:(ghost?.25:0),strokeWeight:on?1.4:1});
     c.setZIndex(on?2:1);});
   sizeLegend();
@@ -373,6 +373,7 @@ const s0=document.getElementById('y0'), s1=document.getElementById('y1');
 [s0,s1].forEach(i=>{i.min=R0;i.max=R1;i.step=1});
 const cl=v=>Math.max(R0,Math.min(R1,v)), pct=v=>(cl(v)-R0)/(R1-R0)*100;
 document.getElementById('rtick').innerHTML=[...Array(yOf(R1)-yOf(R0)).keys()].map(i=>yOf(R0)+1+i).map(y=>`<span style="left:${pct(YM(y,1))}%"${y===NOW_Y?' class="now"':''}>${y}</span>`).join('');
+[...Array(yOf(R1)-yOf(R0)).keys()].forEach(i=>{const t=document.createElement('div');t.className='ytk';t.style.left=pct(YM(yOf(R0)+1+i,1))+'%';document.querySelector('.rng').prepend(t)});
 {const n=document.createElement('div');n.className='nowm';n.style.left=pct(YM(NOW_Y,NOW_M))+'%';n.title='현재';document.querySelector('.rng').prepend(n)}
 let raf=0; const later=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(update)};
 /* 두 손잡이가 같은 해에 겹쳐 있을 때는 끄는 방향에 따라 시작·끝 중 맞는 쪽이 움직인다 */
@@ -380,7 +381,6 @@ s0.oninput=()=>{const v=+s0.value; sel=v<=sel[1]?[v,sel[1]]:(sel[0]===sel[1]?[se
 s1.oninput=()=>{const v=+s1.value; sel=v>=sel[0]?[sel[0],v]:(sel[0]===sel[1]?[v,sel[1]]:[sel[0],sel[0]]); later()};
 /* 두 손잡이가 겹치면 끝 손잡이를 위로: 왼쪽 끝에 몰렸을 때는 시작 손잡이를 위로 */
 const zfix=()=>{s0.style.zIndex=sel[0]>=R1-1?3:1;s1.style.zIndex=2};
-document.getElementById('ghost').onchange=e=>{ghost=e.target.checked;styleMarks()};
 function update(){s0.value=cl(sel[0]);s1.value=cl(sel[1]);zfix();
   const f=document.getElementById('rfill');f.style.left=pct(sel[0])+'%';f.style.width=Math.max(.6,pct(sel[1])-pct(sel[0]))+'%';
   document.getElementById('rl0').textContent=ymLab(sel[0]);document.getElementById('rl1').textContent=ymLab(sel[1]);
