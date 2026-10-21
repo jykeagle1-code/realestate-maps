@@ -264,11 +264,12 @@ function drawCycle(){
   const X0=56,X1=985,T0=2000,T1=2031, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
   const NS='http://www.w3.org/2000/svg', el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
   for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
-  /* 시장 환경 구간(배경): 코로나 유동성 급증 = 기준금리 0.75→0.5% 인하~인상 직전(2020.03~2021.07), 금리 급등 = 인상 시작~3.5% 도달(2021.08~2023.01) */
-  [[2020,3,2021,8,'--liq','코로나'],[2021,8,2023,2,'--rate','금리급등']].forEach(([y0,m0,y1,m1,c,t])=>{
+  /* 시장 환경 구간(배경): 코로나 유동성 급증 = 기준금리 0.75→0.5% 인하~인상 직전(2020.03~2021.07), 금리 급등기 = 인상 시작~3.5% 동결 끝(첫 인하 2024.10 직전, 2021.08~2024.09) */
+  [[2020,3,2021,8,'--liq',['코로나']],[2021,8,2024,10,'--rate',['금리','급등기']]].forEach(([y0,m0,y1,m1,c,t])=>{
     el('rect',{x:x(y0,m0),y:8,width:x(y1,m1)-x(y0,m0),height:177,fill:V(c)});
-    const cx=(x(y0,m0)+x(y1,m1))/2, cy=100;  /* 구간 가운데에 세로 글자 */
-    const e=el('text',{x:cx,y:cy,'font-size':11,'text-anchor':'middle','dominant-baseline':'middle',fill:V(c+'-t'),'font-weight':700,transform:`rotate(-90 ${cx} ${cy})`,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3,'pointer-events':'none'});e.textContent=t});
+    const cx=(x(y0,m0)+x(y1,m1))/2, cy=100-(t.length-1)*7;  /* 구간 가운데, 가로 글자(여러 줄) */
+    const e=el('text',{x:cx,y:cy,'font-size':12,'text-anchor':'middle','dominant-baseline':'middle',fill:V(c+'-t'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3,'pointer-events':'none'});
+    t.forEach((w,i)=>{const sp=document.createElementNS(NS,'tspan');sp.setAttribute('x',cx);sp.setAttribute('dy',i?14:0);sp.textContent=w;e.appendChild(sp)})});
   el('rect',{x:x(yOf(sel[0]),mOf(sel[0])),y:8,width:x(yOf(sel[1]+1),mOf(sel[1]+1))-x(yOf(sel[0]),mOf(sel[0])),height:177,fill:V('--band')});
   const pr=smooth4(C.price||[]), pg=[], vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
