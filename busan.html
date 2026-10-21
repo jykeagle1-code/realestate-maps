@@ -8,17 +8,17 @@
 /* 레이아웃: 위에서 아래로 사이클 → 연도 선택 → 지도(데스크톱은 옆에 요약) → 연도별 막대 */
 :root{
   --bg:#F3F5F4; --panel:#FFFFFF; --ink:#1B2127; --muted:#5C6670; --faint:#8C959E; --line:#DCE1E3;
-  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#D93025; --ma:#1F3A5F; --guline:#2F6FB5;
+  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#D93025; --ma:#2E8B57; --qbar:#8FD19E; --upbg:rgba(217,83,79,.10); --dnbg:rgba(47,111,181,.10); --upt:#D9827A; --dnt:#6F95C4; --cov:#D9534F; --rat:#2F6FB5; --guline:#2F6FB5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#B8C0CA; --band:rgba(239,159,39,.14); --accent:#C2561E; --chip:#EEF1F0; --unsold:#7B3FA8; --unsold:#7B3FA8;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#A9C3EA; --guline:#7FB2E5;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --guline:#7FB2E5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#A9C3EA; --guline:#7FB2E5;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --guline:#7FB2E5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
@@ -200,11 +200,10 @@ details.note summary{cursor:pointer}
 
   <section class="card" aria-label="사이클 그래프">
     <p class="ctitle">가격과 입주 사이클 <span class="scope cname">부산광역시</span></p>
-    <svg id="cyc" viewBox="0 0 1000 215" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
+    <svg id="cyc" viewBox="0 0 1000 239" width="100%" role="img" aria-label="가격과 분기 입주 그래프"></svg>
     <div class="legend" style="padding-left:5.6%">
             <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--price)" stroke-width="3"/></svg> 매매지수</span>
-      <span><svg width="12" height="12"><circle cx="6" cy="6" r="4" style="fill:var(--panel);stroke:var(--price)" stroke-width="2"/></svg> 사이클 고점</span>
-      <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--over)" opacity=".6"/></svg> 분기 입주</span>
+      <span><svg width="12" height="10"><rect width="12" height="10" style="fill:var(--qbar)" opacity=".85"/></svg> 분기 입주</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--ma)" stroke-width="2.6"/></svg> 이동공급합(전후 반년)</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--unsold)" stroke-width="2.6"/></svg> 미분양</span>
       <span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" style="stroke:var(--unsold)" stroke-width="2" stroke-dasharray="3 3"/></svg> 준공 후 미분양</span>
@@ -259,66 +258,77 @@ function curve(pts){if(pts.length<3)return 'M'+pts.map(p=>p.join(',')).join('L')
     d+=`C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`}return d}
 let tipEl=null;
 function drawCycle(){
+  /* 2026-10-22 저자 요청: 현재부터 과거 15년만, 상승기(옅은 빨강)·하락기(옅은 파랑) 바탕 + 글씨(위에서 1/5), 코로나·금리 급상승기는 그래프 위 양쪽 화살표,
+     분기 입주 = 초록 파스텔, 이동공급합 = 초록, 범례에서 사이클 고점 뺌, 적정공급량에 숫자 */
   const C=CH();
   const s=document.getElementById('cyc'); s.innerHTML='';
-  const X0=56,X1=985,T0=2000,T1=2031, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
-  const NS='http://www.w3.org/2000/svg', el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e};
-  for(let yy=2000;yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
-  /* 시장 환경 구간(배경): 코로나 유동성 급증 = 기준금리 0.75→0.5% 인하~인상 직전(2020.03~2021.07), 금리 급등기 = 인상 시작~3.5% 동결 끝(첫 인하 2024.10 직전, 2021.08~2024.09) */
-  [[2020,3,2021,8,'--liq',['코로나']],[2021,8,2024,10,'--rate',['금리','급등기']]].forEach(([y0,m0,y1,m1,c,t])=>{
-    el('rect',{x:x(y0,m0),y:8,width:x(y1,m1)-x(y0,m0),height:177,fill:V(c)});
-    const cx=(x(y0,m0)+x(y1,m1))/2, cy=100-(t.length-1)*7;  /* 구간 가운데, 가로 글자(여러 줄) */
-    const e=el('text',{x:cx,y:cy,'font-size':12,'text-anchor':'middle','dominant-baseline':'middle',fill:V(c+'-t'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3,'pointer-events':'none'});
-    t.forEach((w,i)=>{const sp=document.createElementNS(NS,'tspan');sp.setAttribute('x',cx);sp.setAttribute('dy',i?14:0);sp.textContent=w;e.appendChild(sp)})});
-  el('rect',{x:x(yOf(sel[0]),mOf(sel[0])),y:8,width:x(yOf(sel[1]+1),mOf(sel[1]+1))-x(yOf(sel[0]),mOf(sel[0])),height:177,fill:V('--band')});
-  const pr=smooth4(C.price||[]), pg=[], vs=pr.length?pr.concat(pg).map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
+  const T0=NOW_Y+(NOW_M-1)/12-15, T1=2031, X0=56, X1=985, x=(y,m=1)=>X0+(y+(m-1)/12-T0)/(T1-T0)*(X1-X0);
+  const NS='http://www.w3.org/2000/svg', mk=(p,t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)if(a[k]!=null)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+  const g=mk(s,'g',{transform:'translate(0,24)'}), el=(t,a)=>mk(g,t,a);   /* 위 24px = 시장 환경 화살표 자리 */
+  const tx=(X,Y,str,a)=>{const e=el('text',Object.assign({x:X,y:Y,'font-size':12,fill:V('--muted')},a||{}));e.textContent=str;return e};
+  const kt=k=>+k.slice(0,4)+(+k.slice(5,7)-1+(k.length>7?(+k.slice(8,10)-1)/31:0))/12, kx=k=>X0+(kt(k)-T0)/(T1-T0)*(X1-X0);
+  const prAll=smooth4(C.price||[]), pr=prAll.filter(p=>kt(p[0])>=T0);
+  /* 사이클 고점·저점: 고점 뒤 5% 이상 하락 = 고점, 저점 뒤 5% 이상 상승 = 저점(지그재그) */
+  const peaks=[], troughs=[]; let up=true;
+  if(prAll.length){let hiP=prAll[0], loP=prAll[0];
+    prAll.forEach(p=>{ if(up){ if(p[1]>hiP[1]) hiP=p; else if(p[1]<hiP[1]*.95){peaks.push(hiP);up=false;loP=p} }
+      else { if(p[1]<loP[1]) loP=p; else if(p[1]>loP[1]*1.05){troughs.push(loP);up=true;hiP=p} } });}
+  const xn=x(NOW_Y,NOW_M);
+  if(pr.length){  /* 바탕: 상승기·하락기(현재까지) */
+    const turns=peaks.map(p=>[kt(p[0]),'P']).concat(troughs.map(p=>[kt(p[0]),'T'])).sort((a,b)=>a[0]-b[0]);
+    const segs=[]; let prev=T0; turns.forEach(([t,k])=>{if(t<=T0)return;segs.push([prev,t,k==='P']);prev=t}); segs.push([prev,NOW_Y+(NOW_M-1)/12,up]);
+    segs.forEach(([a,b,u])=>{const xa=X0+(a-T0)/(T1-T0)*(X1-X0), xb=X0+(b-T0)/(T1-T0)*(X1-X0);
+      el('rect',{x:xa,y:8,width:Math.max(0,xb-xa),height:177,fill:V(u?'--upbg':'--dnbg')});
+      if(xb-xa>48) tx((xa+xb)/2,8+177/5+6,u?'상승기':'하락기',{'text-anchor':'middle','font-weight':700,fill:V(u?'--upt':'--dnt'),'pointer-events':'none'})})}
+  for(let yy=Math.ceil(T0);yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
+  /* 시장 환경: 코로나 유동성 = 기준금리 0.75→0.5% 인하~인상 직전(2020.03~2021.07), 금리 급상승기 = 인상 시작~3.5% 동결 끝(첫 인하 2024.10 직전, 2021.08~2024.09) — 그래프 위 양쪽 화살표 */
+  [[2020,3,2021,8,'--cov','코로나'],[2021,8,2024,10,'--rat','금리 급상승기']].forEach(([y0,m0,y1,m1,c,t])=>{
+    const a=x(y0,m0)+1, b=x(y1,m1)-1, ay=26, col=V(c);
+    mk(s,'line',{x1:a+6,x2:b-6,y1:ay,y2:ay,stroke:col,'stroke-width':1.8});
+    mk(s,'path',{d:`M${a},${ay} l7,-4 v8 z M${b},${ay} l-7,-4 v8 z`,fill:col});
+    const e=mk(s,'text',{x:(a+b)/2,y:ay-6,'font-size':12,'text-anchor':'middle','font-weight':700,fill:col});e.textContent=t});
+  const sx0=Math.max(X0,x(yOf(sel[0]),mOf(sel[0]))), sx1=x(yOf(sel[1]+1),mOf(sel[1]+1));
+  if(sx1>sx0) el('rect',{x:sx0,y:8,width:sx1-sx0,height:177,fill:V('--band')});
+  const vs=pr.length?pr.map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
   const py=v=>176-(v-lo)/(hi-lo)*156;  /* 가격선은 아래(공급 영역)부터 위까지 전체 높이 사용 */
-  if(pg.length) el('path',{d:curve(pg.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--guline'),'stroke-width':2,'stroke-dasharray':'5 3'});
-  if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
-  const base=185, smax=C.fairY*3, /* 연 적정공급량을 높이 1/3에 고정, 3배 초과는 잘리고 ▲ 표시. 분기 막대·이동공급합·적정 모두 같은 눈금 */ sy=v=>base-Math.min(v,smax)/smax*128;  /* 막대도 그래프 거의 전체 높이 사용 */
+  if(pr.length) el('path',{d:curve(pr.map(([k,v])=>[kx(k),py(v)])),fill:'none',stroke:V('--price'),'stroke-width':2.8,'stroke-linejoin':'round','stroke-linecap':'round'});
+  const base=185, smax=C.fairY*3, /* 연 적정공급량을 높이 1/3에 고정, 3배 초과는 잘리고 ▲ 표시. 분기 막대·이동공급합·적정 모두 같은 눈금 */ sy=v=>base-Math.min(v,smax)/smax*128;
   const wq=(X1-X0)/(T1-T0)/4;
   /* 그 분기를 가운데 두고 앞뒤 반년씩: ½·q[i-2]+q[i-1]+q[i]+q[i+1]+½·q[i+2] (= 1년치) */
   const cen=i=>{const m=C.mq;if(i<2||i>m.length-3)return null;return .5*m[i-2][1]+m[i-1][1]+m[i][1]+m[i+1][1]+.5*m[i+2][1]};
-  C.mq.forEach(([k,v])=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
-    const r=el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:V('--over'),'fill-opacity':.6,style:'cursor:pointer'});
-    const i=C.mq.findIndex(m=>m[0]===k), s4=cen(i);
+  C.mq.forEach(([k,v],i)=>{const y=+k.slice(0,4),q=+k.slice(5);if(!v||x(y,q*3-2)<X0)return;const fut=y>NOW_Y||(y===NOW_Y&&q*3>=NOW_M);
+    const r=el('rect',{x:(x(y,q*3-2)+.5).toFixed(1),y:sy(v).toFixed(1),width:(wq-1).toFixed(1),height:(base-sy(v)).toFixed(1),fill:V('--qbar'),'fill-opacity':.85,style:'cursor:pointer'});
+    const s4=cen(i);
     const msg=`${y}년 ${q}분기${fut?'(예정)':''} 입주 ${fmt(v)}세대`+(s4!=null?` · 이동공급합 ${fmt(s4)}세대(적정공급량의 ${(s4/C.fairY).toFixed(1)}배)`:'');
-    const tt=document.createElementNS('http://www.w3.org/2000/svg','title');tt.textContent=msg;r.appendChild(tt);
+    const tt=document.createElementNS(NS,'title');tt.textContent=msg;r.appendChild(tt);
     const show=()=>{if(tipEl){tipEl.textContent=msg;tipEl.setAttribute('fill-opacity','1')}r.setAttribute('fill-opacity','1')};
-    if(v>smax){const m=el('text',{x:(x(y,q*3-2)+wq/2).toFixed(1),y:(sy(v)-2).toFixed(1),'font-size':8,'text-anchor':'middle',fill:V('--over')});m.textContent='▲'}
-    r.addEventListener('mouseenter',show);r.addEventListener('click',show);r.addEventListener('mouseleave',()=>r.setAttribute('fill-opacity','.6'))});
+    if(v>smax){const m=el('text',{x:(x(y,q*3-2)+wq/2).toFixed(1),y:(sy(v)-2).toFixed(1),'font-size':8,'text-anchor':'middle',fill:V('--ma')});m.textContent='▲'}
+    r.addEventListener('mouseenter',show);r.addEventListener('click',show);r.addEventListener('mouseleave',()=>r.setAttribute('fill-opacity','.85'))});
   let d='';
-  for(let i=2;i<C.mq.length-2;i++){const k=C.mq[i][0],a=cen(i);d+=(d?'L':'M')+(x(+k.slice(0,4),+k.slice(5)*3-2)+wq/2).toFixed(1)+','+sy(a).toFixed(1)}
-  el('path',{d,fill:'none',stroke:V('--ma'),'stroke-width':2.2});
-  const U=C.unsold||[], CU=C.cunsold||[];
+  for(let i=2;i<C.mq.length-2;i++){const k=C.mq[i][0],X=x(+k.slice(0,4),+k.slice(5)*3-2)+wq/2;if(X<X0)continue;d+=(d?'L':'M')+X.toFixed(1)+','+sy(cen(i)).toFixed(1)}
+  if(d) el('path',{d,fill:'none',stroke:V('--ma'),'stroke-width':2.4});
+  const inR=u=>x(+u[0].slice(0,4),+u[0].slice(5,7))>=X0, U=(C.unsold||[]).filter(inR), CU=(C.cunsold||[]).filter(inR);
   if(U.length){const um=Math.max(...U.map(u=>u[1]))||1, uy=v=>base-v/um*150;
     const line=(arr,st)=>{const d='M'+arr.map(([k,v])=>`${(x(+k.slice(0,4),+k.slice(5,7))).toFixed(1)},${uy(v).toFixed(1)}`).join('L');
       el('path',{d,fill:'none',stroke:V('--panel'),'stroke-width':st[0]+3,'stroke-linejoin':'round',opacity:.85});
       el('path',{d,fill:'none',stroke:V('--unsold'),'stroke-width':st[0],'stroke-dasharray':st[1]||null,'stroke-linejoin':'round'})};
     line(U,[2.6]); if(CU.length) line(CU,[2,'3 3']);
-    const l=U[U.length-1]; const t2=el('text',{x:x(+l[0].slice(0,4),+l[0].slice(5,7))+4,y:uy(l[1])-4,'font-size':11,fill:V('--unsold'),'font-weight':700}); t2.textContent=`미분양 ${fmt(l[1])}`;}
+    const l=U[U.length-1]; tx(x(+l[0].slice(0,4),+l[0].slice(5,7))+4,uy(l[1])-4,`미분양 ${fmt(l[1])}`,{'font-size':11,fill:V('--unsold'),'font-weight':700});}
   /* 적정공급량(연)·이동공급합(연)·분기 막대는 같은 눈금 */
   el('line',{x1:X0,x2:X1,y1:sy(C.fairY),y2:sy(C.fairY),stroke:V('--ink'),'stroke-dasharray':'6 4','stroke-width':1.4});
-  const xn=x(NOW_Y,NOW_M); el('line',{x1:xn,x2:xn,y1:8,y2:base,stroke:V('--ink'),'stroke-width':1.8});
-  const tx=(X,Y,s,a)=>{const e=el('text',Object.assign({x:X,y:Y,'font-size':12,fill:V('--muted')},a||{}));e.textContent=s};
-  tx(X1,sy(C.fairY)-4,'적정공급량',{'text-anchor':'end','font-size':11,fill:V('--ink'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3});
+  el('line',{x1:xn,x2:xn,y1:8,y2:base,stroke:V('--ink'),'stroke-width':1.8});
+  tx(X1,sy(C.fairY)-4,`적정공급량 연 ${fmt(C.fairY)}`,{'text-anchor':'end','font-size':11,fill:V('--ink'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3});
   tx(xn,base+12,'현재',{fill:V('--ink'),'font-weight':700,'text-anchor':'middle','font-size':11});
   tipEl=el('text',{x:X0+6,y:20,'font-size':13,fill:V('--ink'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':4});tipEl.textContent='막대를 누르면 물량 표시';tipEl.setAttribute('fill-opacity','.75');
-  for(let y=2000;y<=2030;y+=5) tx(x(y),205,y,{'text-anchor':'middle'});
+  for(let y=Math.ceil(T0);y<=2030;y++) if((y%5===0||y===Math.ceil(T0))&&Math.abs(x(y)-xn)>28) tx(x(y),205,y,{'text-anchor':'middle'});
   if(pr.length) tx(X0-6,30,'가격',{'text-anchor':'end',fill:V('--price'),'font-weight':700}); else tx(X0+4,40,'가격선은 국토부 실거래 지수로 추가 예정',{fill:V('--faint')});
   tx(X0-6,176,'입주',{'text-anchor':'end',fill:V('--ma'),'font-weight':700});
   if(!pr.length) return;
-  /* 사이클 고점: 고점 뒤 5% 이상 하락해야 고점으로 인정(지그재그) */
-  const peaks=[]; let hiP=pr[0], loP=pr[0], up=true;
-  pr.forEach(p=>{ if(up){ if(p[1]>hiP[1]) hiP=p; else if(p[1]<hiP[1]*.95){peaks.push(hiP);up=false;loP=p} }
-    else { if(p[1]<loP[1]) loP=p; else if(p[1]>loP[1]*1.05){up=true;hiP=p} } });
-  const kx=k=>x(+k.slice(0,4),+k.slice(5,7)+(+k.slice(8,10)-1)/31);
-  peaks.forEach(pk=>{const X=kx(pk[0]),Y=py(pk[1]);
+  peaks.filter(pk=>kt(pk[0])>=T0+.3).forEach(pk=>{const X=kx(pk[0]),Y=py(pk[1]);
     el('circle',{cx:X,cy:Y,r:4.5,fill:V('--panel'),stroke:V('--price'),'stroke-width':2});
     tx(X,Y-9,'고점 '+pk[0].slice(2,4)+'.'+pk[0].slice(5,7),{'text-anchor':'middle',fill:V('--price'),'font-weight':700,'font-size':11,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3})});
-  if(pg.length){const l=pg[pg.length-1];tx(x(+l[0].slice(0,4),+l[0].slice(5,7))+4,py(l[1])+4,scope.n,{fill:V('--guline'),'font-weight':700,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3})}
   if(peaks.length){const pk=peaks[peaks.length-1], cur=pr[pr.length-1], r=(cur[1]/pk[1]-1)*100, Y=py(pk[1]);
-    el('line',{x1:kx(pk[0]),x2:kx(cur[0]),y1:Y,y2:Y,stroke:V('--price'),'stroke-dasharray':'3 3','stroke-width':1.2,opacity:.8});
+    if(kt(pk[0])>=T0) el('line',{x1:kx(pk[0]),x2:kx(cur[0]),y1:Y,y2:Y,stroke:V('--price'),'stroke-dasharray':'3 3','stroke-width':1.2,opacity:.8});
     tx(kx(cur[0])+5,Y+(r<0?4:-6),r<0?`전고점 ${r.toFixed(0)}%`:`전고점 돌파 +${r.toFixed(0)}%`,{fill:V('--price'),'font-weight':700,'font-size':11,'paint-order':'stroke',stroke:V('--panel'),'stroke-width':3})}
 }
 
