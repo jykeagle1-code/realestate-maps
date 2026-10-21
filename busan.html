@@ -391,8 +391,12 @@ function CH(){const z=chartZone();
   if(!z||!DATA.priceZone[z.name])return {name:DATA.adm||DATA.city,price:DATA.price,mq:DATA.mq,unsold:DATA.unsold,cunsold:DATA.cunsold,fairY:FAIR_Y,fairQ:FAIR_Q,rows:DATA.rows};
   const fy=Math.round(z.pop*0.005);
   return {name:z.name,price:DATA.priceZone[z.name],mq:DATA.mqZone[z.name],unsold:DATA.unsoldZone[z.name],cunsold:DATA.cunsoldZone[z.name],fairY:fy,fairQ:Math.round(fy/4),rows:DATA.rows.filter(r=>z.gus.includes(r[6]))}}
+/* 적정 대비 비율 → 파스텔 색: 부족이 심할수록 진한 초록, 적정(1배) 근처 회색, 과다가 심할수록 진한 빨강 */
+function ratioColor(r){const G='#E6E8EA',GR='#8FCFA4',RD='#F2958C';
+  const bg=r<1?mix(G,GR,Math.min(1,(1-r)/0.7)):mix(G,RD,Math.min(1,(r-1)/1.0));  /* 0.3배 이하 = 가장 진한 초록, 2배 이상 = 가장 진한 빨강 */
+  return `background:${bg};color:${dk(bg,.45)}`}
 const ratioPill=(h,yrs,fair,cls='')=>{const r=h/yrs/fair,sm=cls.includes('sm');  /* 표 안(sm)은 짧게: '31% 부족' / '1.7배 과다' */
-  return `<span class="pill ${cls} ${r>1?'over':'under'}" title="적정공급량 대비">${r>1?(sm?`${r.toFixed(1)}배 과다`:`적정의 ${r.toFixed(1)}배 · 과다`):(sm?`${Math.round(r*100)}% 부족`:`적정의 ${Math.round(r*100)}% · 부족`)}</span>`};
+  return `<span class="pill ${cls}" style="${ratioColor(r)}" title="적정공급량 대비">${r>1?(sm?`${r.toFixed(1)}배 과다`:`적정의 ${r.toFixed(1)}배 · 과다`):(sm?`${Math.round(r*100)}% 부족`:`적정의 ${Math.round(r*100)}% · 부족`)}</span>`};
 function summary(){renderTable();renderScope()}
 const OPEN=new Set();  /* 펼친 권역 */
 function renderTable(){
