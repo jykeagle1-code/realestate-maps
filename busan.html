@@ -317,7 +317,7 @@ function drawCycle(){
 
 /* 지도 (카카오맵) */
 let map, circles=[], guPolys={}, overlay=null, ghost2=true, hover=null, hoverDiv=null;
-const R0M=230; /* 1,000세대 원 반지름(m) — 원 넓이가 세대수에 비례 */
+const R0M=460; /* 1,000세대 원 반지름(m) — 2026-10-21 저자 요청으로 2배(230→460) — 원 넓이가 세대수에 비례 */
 const radM=h=>Math.sqrt(h/1000)*R0M;
 let mppHome=null; const zk=()=>{const m=mPerPx();return mppHome&&m<mppHome?Math.pow(m/mppHome,.65):1};  /* 확대할수록 원이 지나치게 커지지 않게 */
 function initMap(){
@@ -337,11 +337,11 @@ function initMap(){
   hoverDiv.style.cssText='background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);transform:translateY(-10px);pointer-events:none';
   hover=new kakao.maps.CustomOverlay({content:hoverDiv,yAnchor:1,zIndex:20});
   const rows=[...DATA.rows].sort((a,b)=>b[5]-a[5]);
-  circles=rows.map(r=>{const c=new kakao.maps.Circle({map,center:new kakao.maps.LatLng(r[1],r[2]),radius:radM(r[5]),strokeWeight:1});c.r=r;
+  circles=rows.map(r=>{const c=new kakao.maps.Circle({map,center:new kakao.maps.LatLng(r[1],r[2]),radius:radM(r[5]),strokeWeight:1});c.row=r;  /* 주의: 카카오 Circle 내부가 'r' 속성을 써서 c.r 로 두면 다시 지도에 올릴 때 오류 */
     kakao.maps.event.addListener(c,'click',()=>openInfo(r));
     kakao.maps.event.addListener(c,'mouseover',()=>{hoverDiv.innerHTML=`<b>${r[0]}</b> · ${fmt(r[5])}세대 · ${r[3]}.${String(r[4]).padStart(2,'0')}`;hover.setPosition(new kakao.maps.LatLng(r[1],r[2]));hover.setMap(map);c.setOptions({strokeWeight:3})});
     kakao.maps.event.addListener(c,'mouseout',()=>{hover.setMap(null);styleMarks()});return c});
-  kakao.maps.event.addListener(map,'zoom_changed',()=>{const k=zk();circles.forEach(c=>c.setRadius(radM(c.r[5])*k))});
+  kakao.maps.event.addListener(map,'zoom_changed',()=>{const k=zk();circles.forEach(c=>c.setRadius(radM(c.row[5])*k))});
   kakao.maps.event.addListener(map,'click',()=>{if(overlay)overlay.setMap(null)});
   update();
 }
@@ -354,7 +354,7 @@ function openInfo(r){
   overlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(r[1],r[2]),content:div,yAnchor:1,zIndex:10});
 }
 function styleMarks(){ if(!map) return;
-  circles.forEach(c=>{const y=c.r[3],on=inSel(c.r),col=yc(y);
+  circles.forEach(c=>{const y=c.row[3],on=inSel(c.row),col=yc(y);
     const vis=on||ghost; if(!!c.getMap()!==vis) c.setMap(vis?map:null); if(!vis) return;  /* 기간 밖 단지는 지도에서 뺌(마우스 반응도 없음) */
     c.setOptions({strokeColor:dk(col),fillColor:col,fillOpacity:on?.62:(ghost?.1:0),strokeOpacity:on?.95:(ghost?.25:0),strokeWeight:on?1.4:1});
     c.setZIndex(on?2:1);});
