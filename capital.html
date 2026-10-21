@@ -95,9 +95,14 @@ tr.gu{cursor:pointer}
 tr.gu td{transition:background .18s,color .18s}
 tr.gu:hover td{background:var(--chip)}
 .pill.sm{font-size:10.5px;padding:1px 6px;white-space:nowrap}
+tr.gu.zone td:first-child{white-space:nowrap}
 tr.gu.zone td{font-weight:700;border-top:1px solid var(--line)}
 tr.gu.zone td:last-child{text-align:right}
-tr.gu.sub td:first-child{padding-left:16px;color:var(--muted)}
+.tog{font:inherit;font-size:11px;width:18px;height:18px;margin:0 4px 0 -2px;padding:0;border:0;border-radius:4px;background:none;color:var(--muted);cursor:pointer;vertical-align:1px}
+.tog:hover{background:var(--chip);color:var(--ink)}
+.tog0{display:inline-block;width:20px}
+tr.gu.sub.hide{display:none}
+tr.gu.sub td:first-child{padding-left:26px;color:var(--muted)}
 tr.gu.on td{background:color-mix(in srgb,var(--accent) 11%,var(--panel));color:var(--ink);font-weight:700;border-bottom-color:transparent}
 tr.gu.on td:first-child{box-shadow:inset 3px 0 0 var(--accent);color:var(--accent);padding-left:10px;border-radius:6px 0 0 6px}
 tr.gu.on td:last-child{border-radius:0 6px 6px 0}
@@ -345,7 +350,7 @@ function openInfo(r){
   const kn=encodeURIComponent(r[0].replace(/,/g,' '));
   const div=document.createElement('div');
   div.style.cssText='background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translateY(-12px);max-width:260px';
-  div.innerHTML=`<b>${r[0]}</b><br>${r[3]}년 ${r[4]}월 ${r[3]>NOW_Y||(r[3]===NOW_Y&&r[4]>=NOW_M)?'입주 예정':'사용승인'} · <b>${fmt(r[5])}</b>세대<br><span style="color:var(--muted)">${r[6]||''} · ${r[7]}</span><div style="margin-top:6px;display:flex;gap:10px"><a style="color:var(--accent);font-weight:700" href="https://map.kakao.com/link/map/${kn},${r[1]},${r[2]}" target="_blank" rel="noopener">카카오맵</a><a style="color:var(--accent);font-weight:700" href="https://map.kakao.com/link/roadview/${r[1]},${r[2]}" target="_blank" rel="noopener">로드뷰</a></div>`;
+  div.innerHTML=`<b>${r[0]}</b><br>${r[3]}년 ${r[4]}월 ${r[3]>NOW_Y||(r[3]===NOW_Y&&r[4]>=NOW_M)?'입주 예정':'사용승인'} · <b>${fmt(r[5])}</b>세대<br><span style="color:var(--muted)">${dn(r[6])} · ${r[7]}</span><div style="margin-top:6px;display:flex;gap:10px"><a style="color:var(--accent);font-weight:700" href="https://map.kakao.com/link/map/${kn},${r[1]},${r[2]}" target="_blank" rel="noopener">카카오맵</a><a style="color:var(--accent);font-weight:700" href="https://map.kakao.com/link/roadview/${r[1]},${r[2]}" target="_blank" rel="noopener">로드뷰</a></div>`;
   overlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(r[1],r[2]),content:div,yAnchor:1,zIndex:10});
 }
 function styleMarks(){ if(!map) return;
@@ -366,6 +371,7 @@ function fitGu(n){const p=guPolys[n];if(!p)return;const b=new kakao.maps.LatLngB
 
 /* 요약·구별·연도 막대 */
 /* 선택 범위: null = 도시 전체, {t:'Z',n:권역} = 권역(생활권), {t:'G',n:구} = 구. 적정 판단은 도시·권역까지만 */
+const dn=g=>(g||'').replace(/^(\S+)시 (\S+구)$/,'$1 $2');  /* 표시용 짧은 이름 */
 const ZONES=DATA.zones||[], ZBY=Object.fromEntries(ZONES.map(z=>[z.name,z]));
 let scope=null;
 const keyOf=sc=>sc?sc.t+':'+sc.n:'';
@@ -375,6 +381,7 @@ const inScope=r=>{const g=scopeGus(scope);return !g||g.includes(r[6])};
 function fitZone(n){const b=new kakao.maps.LatLngBounds(),gs=ZBY[n].gus;let k=0;DATA.rows.forEach(r=>{if(gs.includes(r[6])){b.extend(new kakao.maps.LatLng(r[1],r[2]));k++}});
   if(!k)gs.forEach(g=>{const p=guPolys[g];if(p)p.getPath().forEach(path=>(Array.isArray(path)?path:[path]).forEach(ll=>b.extend(ll)))});map.setBounds(b)}
 function pick(sc){scope=(sc&&keyOf(sc)===keyOf(scope))?null:sc;
+  if(scope&&ZONES.length){const z=scope.t==='Z'?scope.n:(ZONES.find(q=>q.gus.includes(scope.n))||{}).name;if(z&&!OPEN.has(z)){OPEN.add(z);renderTable()}}
   if(map){if(!scope)goHome();else if(scope.t==='Z')fitZone(scope.n);else fitGu(scope.n)}
   renderScope()}
 /* 두 그래프의 범위: 권역을 고르면 그 권역, 구를 고르면 그 구가 속한 권역, 도시를 고르면 도시 전체 */
@@ -383,14 +390,16 @@ function CH(){const z=chartZone();
   if(!z||!DATA.priceZone[z.name])return {name:DATA.adm||DATA.city,price:DATA.price,mq:DATA.mq,unsold:DATA.unsold,cunsold:DATA.cunsold,fairY:FAIR_Y,fairQ:FAIR_Q,rows:DATA.rows};
   const fy=Math.round(z.pop*0.005);
   return {name:z.name,price:DATA.priceZone[z.name],mq:DATA.mqZone[z.name],unsold:DATA.unsoldZone[z.name],cunsold:DATA.cunsoldZone[z.name],fairY:fy,fairQ:Math.round(fy/4),rows:DATA.rows.filter(r=>z.gus.includes(r[6]))}}
-const ratioPill=(h,yrs,fair,cls='')=>{const r=h/yrs/fair;return `<span class="pill ${cls} ${r>1?'over':'under'}">${r>1?`적정의 ${r.toFixed(1)}배 · 과다`:`적정의 ${Math.round(r*100)}% · 부족`}</span>`};
+const ratioPill=(h,yrs,fair,cls='')=>{const r=h/yrs/fair,sm=cls.includes('sm');  /* 표 안(sm)은 짧게: '31% 부족' / '1.7배 과다' */
+  return `<span class="pill ${cls} ${r>1?'over':'under'}" title="적정공급량 대비">${r>1?(sm?`${r.toFixed(1)}배 과다`:`적정의 ${r.toFixed(1)}배 · 과다`):(sm?`${Math.round(r*100)}% 부족`:`적정의 ${Math.round(r*100)}% · 부족`)}</span>`};
 function summary(){renderTable();renderScope()}
+const OPEN=new Set();  /* 펼친 권역 */
 function renderTable(){
   const on=DATA.rows.filter(inSel), yrs=(sel[1]-sel[0]+1)/12;
   const g={}; on.forEach(r=>{g[r[6]]=g[r[6]]||[0,0];g[r[6]][0]+=r[5];g[r[6]][1]++});
   const mx=Math.max(1,...Object.values(g).map(v=>v[0]));
   const tb=document.getElementById('gutab'); tb.innerHTML='';
-  const row=(cls,key,label,h,c,last,sc)=>{const tr=document.createElement('tr');tr.className='gu '+cls;tr.tabIndex=0;tr.dataset.key=key;
+  const row=(cls,key,label,h,c,last,sc,zn)=>{const tr=document.createElement('tr');tr.className='gu '+cls;tr.tabIndex=0;tr.dataset.key=key;if(zn)tr.dataset.zone=zn;
     tr.innerHTML=`<td>${label}</td><td class="num">${fmt(h)}</td><td class="num">${c}</td><td>${last}</td>`;
     const go=()=>pick(sc);tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter')go()};tb.appendChild(tr)};
   const H=on.reduce((a,r)=>a+r[5],0);
@@ -398,24 +407,28 @@ function renderTable(){
   const bar=h=>`<div class="bar" style="width:${(h/mx*100).toFixed(0)}%"></div>`;
   if(ZONES.length){
     ZONES.forEach(z=>{const zh=z.gus.reduce((a,x)=>a+(g[x]?g[x][0]:0),0), zc=z.gus.reduce((a,x)=>a+(g[x]?g[x][1]:0),0);
-      row('zone','Z:'+z.name,z.name,zh,zc,ratioPill(zh,yrs,z.pop*0.005,'sm'),{t:'Z',n:z.name});
-      if(z.gus.length>1) z.gus.filter(x=>g[x]).sort((a,b)=>g[b][0]-g[a][0]).forEach(x=>row('sub','G:'+x,x,g[x][0],g[x][1],bar(g[x][0]),{t:'G',n:x}))});
-  } else Object.entries(g).sort((a,b)=>b[1][0]-a[1][0]).forEach(([n,[h,c]])=>row('','G:'+n,n,h,c,bar(h),{t:'G',n}));
+      const subs=z.gus.length>1?z.gus.filter(x=>g[x]).sort((a,b)=>g[b][0]-g[a][0]):[];
+      const op=OPEN.has(z.name), tog=subs.length?`<button class="tog" data-z="${z.name}" aria-expanded="${op}" aria-label="${z.name} 시군구 ${op?'접기':'펼치기'}">${op?'▾':'▸'}</button>`:'<span class="tog0"></span>';
+      row('zone','Z:'+z.name,tog+z.name,zh,zc,ratioPill(zh,yrs,z.pop*0.005,'sm'),{t:'Z',n:z.name});
+      subs.forEach(x=>row('sub'+(op?'':' hide'),'G:'+x,dn(x),g[x][0],g[x][1],bar(g[x][0]),{t:'G',n:x},z.name))});
+    tb.querySelectorAll('button.tog').forEach(b=>b.onclick=e=>{e.stopPropagation();const z=b.dataset.z;OPEN.has(z)?OPEN.delete(z):OPEN.add(z);renderTable();renderScopeMarks()});
+  } else Object.entries(g).sort((a,b)=>b[1][0]-a[1][0]).forEach(([n,[h,c]])=>row('','G:'+n,dn(n),h,c,bar(h),{t:'G',n}));
 }
 function renderScope(){
   const on=DATA.rows.filter(r=>inSel(r)&&inScope(r)), H=on.reduce((a,r)=>a+r[5],0), yrs=(sel[1]-sel[0]+1)/12;
-  const name=scope?scope.n:(DATA.adm||DATA.city);
+  const name=scope?dn(scope.n):(DATA.adm||DATA.city);
   document.getElementById('sel-title').textContent=`${ymLab(sel[0])} ~ ${ymLab(sel[1])} · ${name}`;
   document.getElementById('s-h').textContent=fmt(H);
   document.getElementById('s-n').textContent=fmt(on.length);
   const fair=!scope?FAIR_Y:(scope.t==='Z'?Math.round(ZBY[scope.n].pop*0.005):null), J=document.getElementById('s-judge');
   J.innerHTML=fair?`<span>연평균</span> <b class="num" style="display:inline;font-size:18px">${fmt(H/yrs)}</b> <span>· 적정 연 <span class="num">${fmt(fair)}</span>세대</span> ${ratioPill(H,yrs,fair)}`
     :`<span style="color:var(--muted)">구 단위는 적정공급량을 판단하지 않습니다 · ${ZONES.find(z=>z.gus.includes(scope.n))?.name||''} 권역을 눌러 보세요</span>`;
-  [...document.querySelectorAll('#gutab tr')].forEach(r=>r.classList.toggle('on',r.dataset.key===keyOf(scope)));
+  renderScopeMarks();
   cxList(on, name);
   const cn=CH().name; document.querySelectorAll('.cname').forEach(e=>e.textContent=cn);
   drawCycle(); yearBars();
 }
+function renderScopeMarks(){[...document.querySelectorAll('#gutab tr')].forEach(r=>r.classList.toggle('on',r.dataset.key===keyOf(scope)))}
 /* 기간·선택 범위의 입주 단지 목록 — 입주월 순 */
 function cxList(on, name){
   const L=[...on].sort((a,b)=>YM(a[3],a[4])-YM(b[3],b[4])||b[5]-a[5]), oneGu=scope&&scope.t==='G';
@@ -423,7 +436,7 @@ function cxList(on, name){
   document.getElementById('cx-sum').textContent=`${fmt(L.length)}단지 · ${fmt(L.reduce((a,r)=>a+r[5],0))}세대`;
   const tb=document.getElementById('cxtab'); tb.innerHTML='';
   L.forEach(r=>{const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="d num"><i style="background:${yc(r[3])}"></i>${r[3]}.${String(r[4]).padStart(2,'0')}</td><td class="n" title="${r[0]}">${r[0]}</td>${oneGu?'':`<td class="g">${r[6]||''}</td>`}<td class="num">${fmt(r[5])}</td>`;
+    tr.innerHTML=`<td class="d num"><i style="background:${yc(r[3])}"></i>${r[3]}.${String(r[4]).padStart(2,'0')}</td><td class="n" title="${r[0]}">${r[0]}</td>${oneGu?'':`<td class="g">${dn(r[6])}</td>`}<td class="num">${fmt(r[5])}</td>`;
     tr.onclick=()=>{if(!map)return;map.setLevel(Math.min(map.getLevel(),5));map.setCenter(new kakao.maps.LatLng(r[1],r[2]));openInfo(r)};
     tb.appendChild(tr)});
   if(!L.length) tb.innerHTML='<tr><td style="text-align:left;color:var(--muted)">이 기간에는 입주 단지가 없습니다.</td></tr>';
