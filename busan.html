@@ -355,7 +355,7 @@ function openInfo(r){
   overlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(r[1],r[2]),content:div,yAnchor:1,zIndex:10});
 }
 function styleMarks(){ if(!map) return;
-  circles.forEach(c=>{const y=c.row[3],on=inSel(c.row),col=yc(y);
+  circles.forEach(c=>{const y=c.row[3],on=inSel(c.row)&&inScope(c.row),col=yc(y);  /* 권역·구를 고르면 그 범위 단지만 */
     const vis=on||ghost; if(!!c.getMap()!==vis) c.setMap(vis?map:null); if(!vis) return;  /* 기간 밖 단지는 지도에서 뺌(마우스 반응도 없음) */
     c.setOptions({strokeColor:dk(col),fillColor:col,fillOpacity:on?.62:(ghost?.1:0),strokeOpacity:on?.95:(ghost?.25:0),strokeWeight:on?1.4:1});
     c.setZIndex(on?2:1);});
@@ -430,7 +430,7 @@ function renderScope(){
   const fair=!scope?FAIR_Y:(scope.t==='Z'?Math.round(ZBY[scope.n].pop*0.005):null), J=document.getElementById('s-judge');
   J.innerHTML=fair?`<span>연평균</span> <b class="num" style="display:inline;font-size:18px">${fmt(H/yrs)}</b> <span>· 적정 연 <span class="num">${fmt(fair)}</span>세대</span> ${ratioPill(H,yrs,fair)}`
     :`<span style="color:var(--muted)">구 단위는 적정공급량을 판단하지 않습니다 · ${ZONES.find(z=>z.gus.includes(scope.n))?.name||''} 권역을 눌러 보세요</span>`;
-  renderScopeMarks();
+  renderScopeMarks(); styleMarks();
   cxList(on, name);
   const cn=CH().name; document.querySelectorAll('.cname').forEach(e=>e.textContent=cn);
   drawCycle(); yearBars();
@@ -507,7 +507,7 @@ function update(){s0.value=cl(sel[0]);s1.value=cl(sel[1]);zfix();
   document.getElementById('rl0').textContent=ymLab(sel[0]);document.getElementById('rl1').textContent=ymLab(sel[1]);
   document.querySelectorAll('#yearleg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===sel.join('-')));
   
-  styleMarks();summary()  /* summary → renderScope 가 두 그래프도 다시 그림 */}
+  summary()  /* summary → renderScope 가 지도 원·두 그래프도 다시 그림 */}
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ramp();update()});
 ramp();
 if(window.kakao&&kakao.maps){kakao.maps.load(initMap)}else{document.getElementById('map').innerHTML='<p style="padding:16px;color:var(--muted)">카카오맵을 불러오지 못했습니다. 등록된 주소(jykeagle1-code.github.io)에서 열어 주세요.</p>';update()}
