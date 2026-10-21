@@ -98,10 +98,11 @@ tr.gu:hover td{background:var(--chip)}
 tr.gu.zone td:first-child{white-space:nowrap}
 tr.gu.zone td{font-weight:700;border-top:1px solid var(--line)}
 tr.gu.zone td:last-child{text-align:right}
-.tog{font:inherit;font-size:11px;width:18px;height:18px;margin:0 4px 0 -2px;padding:0;border:0;border-radius:4px;background:none;color:var(--muted);cursor:pointer;vertical-align:1px}
+.tog{font:inherit;font-size:13px;line-height:1;width:24px;height:24px;margin:0 4px 0 -4px;padding:0;border:0;border-radius:4px;background:none;color:var(--muted);cursor:pointer;vertical-align:1px}
 .tog:hover{background:var(--chip);color:var(--ink)}
-.tog0{display:inline-block;width:20px}
+.tog0{display:inline-block;width:24px}
 tr.gu.sub.hide{display:none}
+tr.gu.sub.zero td{color:var(--faint)}
 tr.gu.sub td:first-child{padding-left:26px;color:var(--muted)}
 tr.gu.on td{background:color-mix(in srgb,var(--accent) 11%,var(--panel));color:var(--ink);font-weight:700;border-bottom-color:transparent}
 tr.gu.on td:first-child{box-shadow:inset 3px 0 0 var(--accent);color:var(--accent);padding-left:10px;border-radius:6px 0 0 6px}
@@ -407,10 +408,10 @@ function renderTable(){
   const bar=h=>`<div class="bar" style="width:${(h/mx*100).toFixed(0)}%"></div>`;
   if(ZONES.length){
     ZONES.forEach(z=>{const zh=z.gus.reduce((a,x)=>a+(g[x]?g[x][0]:0),0), zc=z.gus.reduce((a,x)=>a+(g[x]?g[x][1]:0),0);
-      const subs=z.gus.length>1?z.gus.filter(x=>g[x]).sort((a,b)=>g[b][0]-g[a][0]):[];
-      const op=OPEN.has(z.name), tog=subs.length?`<button class="tog" data-z="${z.name}" aria-expanded="${op}" aria-label="${z.name} 시군구 ${op?'접기':'펼치기'}">${op?'▾':'▸'}</button>`:'<span class="tog0"></span>';
+      const subs=z.gus.length>1?[...z.gus].filter(x=>!x.startsWith('인천 ')||g[x]||!['인천 중구','인천 동구','인천 서구'].includes(x)).sort((a,b)=>((g[b]||[0])[0]-(g[a]||[0])[0])||a.localeCompare(b,'ko')):[];
+      const op=OPEN.has(z.name), tog=subs.length?`<button class="tog" data-z="${z.name}" aria-expanded="${op}" aria-label="${z.name} 시군구 ${op?'접기':'펼치기'}">${op?'▼':'▶'}</button>`:'<span class="tog0"></span>';
       row('zone','Z:'+z.name,tog+z.name,zh,zc,ratioPill(zh,yrs,z.pop*0.005,'sm'),{t:'Z',n:z.name});
-      subs.forEach(x=>row('sub'+(op?'':' hide'),'G:'+x,dn(x),g[x][0],g[x][1],bar(g[x][0]),{t:'G',n:x},z.name))});
+      subs.forEach(x=>{const v=g[x]||[0,0];row('sub'+(op?'':' hide')+(v[0]?'':' zero'),'G:'+x,dn(x),v[0],v[1],v[0]?bar(v[0]):'',{t:'G',n:x},z.name)})});
     tb.querySelectorAll('button.tog').forEach(b=>b.onclick=e=>{e.stopPropagation();const z=b.dataset.z;OPEN.has(z)?OPEN.delete(z):OPEN.add(z);renderTable();renderScopeMarks()});
   } else Object.entries(g).sort((a,b)=>b[1][0]-a[1][0]).forEach(([n,[h,c]])=>row('','G:'+n,dn(n),h,c,bar(h),{t:'G',n}));
 }
