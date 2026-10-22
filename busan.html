@@ -8,17 +8,17 @@
 /* 레이아웃: 위에서 아래로 사이클 → 연도 선택 → 지도(데스크톱은 옆에 요약) → 연도별 막대 */
 :root{
   --bg:#F3F5F4; --panel:#FFFFFF; --ink:#1B2127; --muted:#5C6670; --faint:#8C959E; --line:#DCE1E3;
-  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#D93025; --ma:#2E8B57; --qbar:#8FD19E; --upbg:rgba(217,83,79,.10); --dnbg:rgba(47,111,181,.10); --upt:#D9827A; --dnt:#6F95C4; --cov:#D9534F; --rat:#2F6FB5; --guline:#2F6FB5;
+  --sea:#DCE6EC; --land:#FBFBF8; --land2:#EEF0EC; --gu:#B9C2C8; --price:#D93025; --ma:#2E8B57; --qbar:#8FD19E; --upbg:rgba(217,83,79,.10); --dnbg:rgba(47,111,181,.10); --upt:#D9827A; --dnt:#6F95C4; --cov:#D9534F; --rat:#2F6FB5; --hold:#7FA7D9; --guline:#2F6FB5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#B8C0CA; --band:rgba(239,159,39,.14); --accent:#C2561E; --chip:#EEF1F0; --unsold:#7B3FA8; --unsold:#7B3FA8;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --guline:#7FB2E5;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --hold:#A9C6E8; --guline:#7FB2E5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111518; --panel:#192024; --ink:#E7ECEF; --muted:#9DA7B0; --faint:#6F7A83; --line:#2B343A;
-  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --guline:#7FB2E5;
+  --sea:#0E1A22; --land:#1F272C; --land2:#192024; --gu:#3D4950; --price:#FF7B70; --ma:#6FCF97; --qbar:#3F8F55; --upbg:rgba(255,123,112,.10); --dnbg:rgba(127,178,229,.10); --upt:#E89A92; --dnt:#8DB3DE; --cov:#FF7B70; --rat:#7FB2E5; --hold:#A9C6E8; --guline:#7FB2E5;
   --liq:rgba(120,190,160,.22); --liq-t:#3E8F6B; --rate:rgba(150,140,210,.22); --rate-t:#6A5FB0; --over:#E8743B; --under:#59636B; --band:rgba(239,159,39,.16); --accent:#F0A06A; --chip:#222A2F; --unsold:#C9A6EC; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
@@ -280,12 +280,16 @@ function drawCycle(){
       el('rect',{x:xa,y:8,width:Math.max(0,xb-xa),height:177,fill:V(u?'--upbg':'--dnbg')});
       if(xb-xa>48) tx((xa+xb)/2,8+177/5+6,u?'상승기':'하락기',{'text-anchor':'middle','font-weight':700,fill:V(u?'--upt':'--dnt'),'pointer-events':'none'})})}
   for(let yy=Math.ceil(T0);yy<=2031;yy++) el('line',{x1:x(yy),x2:x(yy),y1:8,y2:185,stroke:V('--line'),'stroke-width':yy%5===0?1.3:.8});
-  /* 시장 환경: 코로나 유동성 = 기준금리 0.75→0.5% 인하~인상 직전(2020.03~2021.07), 금리 급상승기 = 인상 시작~3.5% 동결 끝(첫 인하 2024.10 직전, 2021.08~2024.09) — 그래프 위 양쪽 화살표 */
-  [[2020,3,2021,8,'--cov','코로나'],[2021,8,2024,10,'--rat','금리 급상승기']].forEach(([y0,m0,y1,m1,c,t])=>{
+  /* 시장 환경(2026-10-22 저자 확정): 코로나 유동성 = 기준금리 0.75→0.5%(2020.03~2021.07), 금리 급상승 = 0.75→3.50%(2021.08~2022.12), 고금리 유지 = 3.50% 동결(2023.01~2024.09, 첫 인하 2024.10 직전) — 그래프 위 양쪽 화살표 */
+  const placedL=[];
+  [[2020,3,2021,8,'--cov','코로나'],[2021,8,2023,1,'--rat','금리 급상승'],[2023,1,2024,10,'--hold','고금리 유지']].forEach(([y0,m0,y1,m1,c,t])=>{
     const a=x(y0,m0)+1, b=x(y1,m1)-1, ay=26, col=V(c);
     mk(s,'line',{x1:a+6,x2:b-6,y1:ay,y2:ay,stroke:col,'stroke-width':1.8});
     mk(s,'path',{d:`M${a},${ay} l7,-4 v8 z M${b},${ay} l-7,-4 v8 z`,fill:col});
-    const e=mk(s,'text',{x:(a+b)/2,y:ay-6,'font-size':12,'text-anchor':'middle','font-weight':700,fill:col});e.textContent=t});
+    const cx=(a+b)/2, lw=t.length*11.5; let ly=ay-6;
+    if(placedL.some(([px,pw,py])=>py===ly&&Math.abs(cx-px)<(lw+pw)/2+4)) ly-=13;   /* 옆 이름과 겹치면 한 줄 위로 */
+    placedL.push([cx,lw,ly]);
+    const e=mk(s,'text',{x:cx,y:ly,'font-size':12,'text-anchor':'middle','font-weight':700,fill:col});e.textContent=t});
   const sx0=Math.max(X0,x(yOf(sel[0]),mOf(sel[0]))), sx1=x(yOf(sel[1]+1),mOf(sel[1]+1));
   if(sx1>sx0) el('rect',{x:sx0,y:8,width:sx1-sx0,height:177,fill:V('--band')});
   const vs=pr.length?pr.map(p=>p[1]):[0,1], lo=Math.min(...vs), hi=Math.max(...vs);
